@@ -1,0 +1,32 @@
+<dashboard script="setup_page.js">
+  <label>Gemini &amp; Gemma API Configuration</label>
+  <row>
+    <html>
+      <div id="setup_container" style="padding: 20px; background: #f9f9f9; border-radius: 5px;">
+        <div style="margin-bottom: 15px;">
+          <label>Google AI API Key:</label><br/>
+          <input type="password" id="api_key_input" style="width:450px;" placeholder="Masukkan API Key Anda"/>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <label>Pilih Model Gemini/Gemma:</label><br/>
+          <select id="model_select" style="width:450px;">
+            <option value="gemma-2-27b-it">Gemma 2 27B IT (SOC Optimized)</option>
+            <option value="gemma-2-9b-it">Gemma 2 9B IT (Fast)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Default)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Complex Analysis)</option>
+            <option value="custom">-- Masukkan Model Lainnya --</option>
+          </select>
+        </div>
+
+        <div id="custom_model_div" style="margin-bottom: 15px; display:none;">
+          <label>Nama Model Kustom:</label><br/>
+          <input type="text" id="custom_model_input" style="width:450px;" placeholder="contoh: gemini-2.0-experimental"/>
+        </div>
+
+        <button id="save_btn" class="btn btn-primary">Simpan Konfigurasi</button>
+        <div id="status_msg" style="margin-top:10px; font-weight:bold;"></div>
+      </div>
+    </html>
+  </row>
+</dashboard>
