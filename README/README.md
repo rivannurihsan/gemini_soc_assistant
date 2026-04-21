@@ -106,4 +106,3 @@ index=proxy
 
 ## 📄 Lisensi
 Proyek ini didistribusikan di bawah lisensi **MIT License**. Lihat file `LICENSE` untuk informasi lebih lanjut mengenai hak penggunaan dan modifikasi.
-```
