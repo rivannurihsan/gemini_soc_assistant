@@ -1,8 +1,11 @@
 require([
+    "jquery",
     "splunkjs/mvc",
+    "splunkjs/mvc/utils",
     "splunkjs/mvc/simplexml/ready!"
-], function(mvc) {
+], function($, mvc, utils) {
     
+    // Logika UI Dropdown
     $('#model_select').on('change', function() {
         if ($(this).val() === 'custom') {
             $('#custom_model_div').show();
@@ -21,45 +24,75 @@ require([
             return;
         }
 
-        $('#status_msg').css("color", "blue").text("Sedang menyimpan...");
+        $('#status_msg').css("color", "blue").text("Sedang menghubungi server Splunk...");
         
-        // Buat service instance khusus untuk aplikasi kita
-        var service = mvc.createService({ app: "gemini_soc_assistant", owner: "nobody" });
-        
-        // PERBAIKAN: Gunakan relative path. SDK otomatis mengubahnya menjadi /servicesNS/nobody/gemini_soc_assistant/admin/...
-        var endpointPath = "admin/gemini_setup/gemini_api_setup/gemini_config";
-        
-        service.post(endpointPath, {
-            api_key: apiKey,
-            model_name: modelName
-        }, function(err, response) {
-            if (response) {
-                $('#status_msg').css("color", "green").text("Konfigurasi Berhasil Disimpan!");
-                setTimeout(function(){ location.reload(); }, 2000);
-            } else {
-                // LOGIKA DEBUGGING DETAIL UNTUK SOC DEVELOPER
-                console.error("--- SPLUNK REST API ERROR DETAILS ---");
-                console.error(err);
-                
-                var errorMsg = "Terjadi Kesalahan Tidak Dikenal.";
-                var httpStatus = err.status || "Unknown Status";
-                
-                // Coba ekstrak pesan error langsung dari response Splunkd
-                if (err && err.data && err.data.messages && err.data.messages.length > 0) {
-                    errorMsg = err.data.messages[0].text;
-                } else if (err && err.errorText) {
-                    errorMsg = err.errorText;
-                } else if (err && err.statusText) {
-                    errorMsg = err.statusText;
-                }
+        // Membangun URL Absolut yang menembak langsung ke Core Splunkd
+        var basePath = utils.make_url('/splunkd/__raw/servicesNS/nobody/gemini_soc_assistant/admin/gemini_setup/gemini_api_setup');
 
-                // Tampilkan di UI dengan format: [HTTP Status] - [Pesan Detail]
-                var finalOutput = "Gagal menyimpan: [" + httpStatus + "] " + errorMsg;
-                $('#status_msg').css("color", "red").text(finalOutput);
-                
-                // Tambahkan hint untuk developer
-                $('#status_msg').append("<br/><small><i>*Cek Developer Console (F12) untuk log error mentah.</i></small>");
+        // Fungsi 1: Mencoba melakukan UPDATE (Edit)
+        function updateConfig() {
+            $.ajax({
+                url: basePath + '/gemini_config',
+                type: 'POST',
+                data: {
+                    api_key: apiKey,
+                    model_name: modelName
+                },
+                success: function() {
+                    $('#status_msg').css("color", "green").text("Konfigurasi Berhasil Diperbarui!");
+                    setTimeout(function(){ location.reload(); }, 2000);
+                },
+                error: function(xhr) {
+                    // Jika Splunk bilang "404 Not Found" (belum ada), kita jalankan fungsi CREATE
+                    if (xhr.status === 404) {
+                        createConfig();
+                    } else {
+                        showError(xhr);
+                    }
+                }
+            });
+        }
+
+        // Fungsi 2: Mencoba melakukan CREATE baru
+        function createConfig() {
+            $.ajax({
+                url: basePath,
+                type: 'POST',
+                data: {
+                    name: 'gemini_config', // Parameter name WAJIB saat Create di Splunk
+                    api_key: apiKey,
+                    model_name: modelName
+                },
+                success: function() {
+                    $('#status_msg').css("color", "green").text("Konfigurasi Baru Berhasil Dibuat!");
+                    setTimeout(function(){ location.reload(); }, 2000);
+                },
+                error: function(xhr) {
+                    showError(xhr);
+                }
+            });
+        }
+
+        // Fungsi 3: Menangkap dan membedah Error Detail dari Backend
+        function showError(xhr) {
+            var errorMsg = "Unknown Error";
+            try {
+                // Mencoba mem-parsing response JSON bawaan Splunkd
+                var responseJson = JSON.parse(xhr.responseText);
+                if (responseJson && responseJson.messages && responseJson.messages.length > 0) {
+                    errorMsg = responseJson.messages[0].text;
+                }
+            } catch(e) {
+                // Fallback jika response bukan JSON
+                errorMsg = xhr.responseText || xhr.statusText;
             }
-        });
+            
+            var finalOutput = "Gagal menyimpan: [HTTP " + xhr.status + "] " + errorMsg;
+            $('#status_msg').css("color", "red").text(finalOutput);
+            console.error("--- SPLUNK REST API ERROR DETAILS ---", xhr);
+        }
+
+        // Trigger pertama: Mulai dari mencoba Update
+        updateConfig();
     });
 });
