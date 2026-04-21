@@ -33,8 +33,13 @@ class GeminiSetupHandler(admin.MConfigHandler):
                     'password': api_key,
                     'realm': 'gemini_soc_assistant_realm'
                 }, sessionKey=self.getSessionKey())
-            except:
-                # Jika sudah ada, lakukan update (logic update bisa ditambahkan di sini)
-                pass
+            except Exception as e:
+                # Jika sudah ada (Error EntityExists), lakukan UPDATE (Rotasi Key)
+                try:
+                    ent = entity.getEntity('admin/passwords', 'gemini_soc_assistant_realm:gemini_api_user', sessionKey=self.getSessionKey())
+                    ent['password'] = api_key
+                    entity.setEntity(ent, sessionKey=self.getSessionKey())
+                except Exception as update_err:
+                    raise Exception(f"Gagal memperbarui API Key: {str(update_err)}")
 
 admin.init(GeminiSetupHandler, admin.CONTEXT_NONE)

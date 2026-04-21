@@ -2,6 +2,7 @@
 import sys
 import json
 import urllib.request
+import urllib.parse
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option, validators
 import splunklib.client as client
 
@@ -23,11 +24,14 @@ class GeminiAnalyzeCommand(StreamingCommand):
         try:
             return service.confs['gemini_settings']['gemini_config']['model_name']
         except:
-            return "gemma-2-27b-it"
+            return "gemma-4-31b-it"
 
     def call_gemini_api(self, text_payload):
-        """Fungsi helper untuk memanggil API Gemini"""
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.active_model}:generateContent?key={self.api_key}"
+        """Fungsi helper untuk memanggil API Gemini secara aman"""
+        # Sanitasi nama model dari potensi URL/Path Injection
+        safe_model = urllib.parse.quote(self.active_model, safe='')
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{safe_model}:generateContent?key={self.api_key}"
+        
         payload = {
             "contents": [{"parts": [{"text": text_payload}]}]
         }
@@ -43,26 +47,33 @@ class GeminiAnalyzeCommand(StreamingCommand):
         service = client.connect(token=self._metadata.searchinfo.session_key)
         self.api_key = self.get_credentials(service)
         setup_model = self.get_default_model(service)
-        self.active_model = self.model if self.model else (setup_model if setup_model else "gemma-2-27b-it")
+        self.active_model = self.model if self.model else (setup_model if setup_model else "gemma-4-31b-it")
         
         if not self.api_key:
             raise Exception("API Key belum dikonfigurasi.")
 
     def stream(self, records):
         if self.batch:
-            # --- MODE BATCH: Gabungkan semua jadi satu ---
-            all_records = list(records)
-            all_events = [r.get(self.field, "") for r in all_records if r.get(self.field, "")]
+            # --- MODE BATCH: Gabungkan dengan batasan untuk cegah OOM ---
+            MAX_BATCH_SIZE = 1000  # Batas aman untuk memori server Splunk dan kuota token AI
+            all_events = []
+            
+            for i, record in enumerate(records):
+                if i >= MAX_BATCH_SIZE:
+                    break  # Hentikan pengumpulan jika melebihi batas
+                content = record.get(self.field, "")
+                if content:
+                    all_events.append(content)
             
             if not all_events:
                 return
 
             combined_logs = "\n--- EVENT SEPARATOR ---\n".join(all_events)
-            full_prompt = f"{self.prompt}\n\nBerikut adalah gabungan seluruh log untuk dianalisis secara kolektif:\n\n{combined_logs}"
+            full_prompt = f"{self.prompt}\n\n[INFO: Menampilkan {len(all_events)} log]\nBerikut adalah gabungan seluruh log untuk dianalisis secara kolektif:\n\n{combined_logs}"
             
             analysis = self.call_gemini_api(full_prompt)
             yield {
-                "total_events": len(all_events),
+                "total_events_analyzed": len(all_events),
                 "gemini_analysis": analysis,
                 "analysis_mode": "batch"
             }
