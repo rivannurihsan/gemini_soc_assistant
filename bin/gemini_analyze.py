@@ -11,14 +11,14 @@ class GeminiAnalyzeCommand(StreamingCommand):
     prompt = Option(require=True)
     field = Option(require=False, default="_raw")
     model = Option(require=False)
-    # Menambah opsi batch (default: true)
     batch = Option(require=False, default=True, validate=validators.Boolean())
 
     def get_credentials(self, service):
-        for pw in service.storage_passwords:
-            if pw.realm == "gemini_soc_assistant_realm":
-                return pw.clear_password
-        return None
+        # PERBAIKAN: Langsung membaca API Key dari gemini_settings.conf bawaan Deployer
+        try:
+            return service.confs['gemini_settings']['gemini_config']['api_key']
+        except Exception:
+            return None
 
     def get_default_model(self, service):
         try:
@@ -27,8 +27,6 @@ class GeminiAnalyzeCommand(StreamingCommand):
             return "gemma-4-31b-it"
 
     def call_gemini_api(self, text_payload):
-        """Fungsi helper untuk memanggil API Gemini secara aman"""
-        # Sanitasi nama model dari potensi URL/Path Injection
         safe_model = urllib.parse.quote(self.active_model, safe='')
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{safe_model}:generateContent?key={self.api_key}"
         
@@ -50,17 +48,16 @@ class GeminiAnalyzeCommand(StreamingCommand):
         self.active_model = self.model if self.model else (setup_model if setup_model else "gemma-4-31b-it")
         
         if not self.api_key:
-            raise Exception("API Key belum dikonfigurasi.")
+            raise Exception("API Key belum dikonfigurasi. Silakan perbarui melalui UI Deployer.")
 
     def stream(self, records):
         if self.batch:
-            # --- MODE BATCH: Gabungkan dengan batasan untuk cegah OOM ---
-            MAX_BATCH_SIZE = 1000  # Batas aman untuk memori server Splunk dan kuota token AI
+            MAX_BATCH_SIZE = 1000
             all_events = []
             
             for i, record in enumerate(records):
                 if i >= MAX_BATCH_SIZE:
-                    break  # Hentikan pengumpulan jika melebihi batas
+                    break
                 content = record.get(self.field, "")
                 if content:
                     all_events.append(content)
@@ -78,7 +75,6 @@ class GeminiAnalyzeCommand(StreamingCommand):
                 "analysis_mode": "batch"
             }
         else:
-            # --- MODE NON-BATCH: Analisis satu per satu ---
             for record in records:
                 log_content = record.get(self.field, "")
                 if log_content:
