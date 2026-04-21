@@ -28,8 +28,8 @@ require([
         
         var service = mvc.createService();
         
-        // PERBAIKAN: URL endpoint disesuaikan dengan 'members' di restmap.conf (gemini_settings)
-        service.post("/services/gemini_setup/gemini_settings", {
+        // PERBAIKAN: URL endpoint diubah agar sesuai dengan restmap.conf yang baru
+        service.post("/services/gemini_setup/gemini_api_setup", {
             api_key: apiKey,
             model_name: modelName
         }, function(err, response) {
