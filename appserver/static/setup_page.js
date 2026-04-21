@@ -3,7 +3,6 @@ require([
     "splunkjs/mvc/simplexml/ready!"
 ], function(mvc) {
     
-    // Logika menampilkan input kustom jika opsi "custom" dipilih
     $('#model_select').on('change', function() {
         if ($(this).val() === 'custom') {
             $('#custom_model_div').show();
@@ -15,8 +14,6 @@ require([
     $('#save_btn').on('click', function() {
         var apiKey = $('#api_key_input').val();
         var selectedModel = $('#model_select').val();
-        
-        // Jika pilih kustom, ambil nilai dari input teks
         var modelName = (selectedModel === 'custom') ? $('#custom_model_input').val() : selectedModel;
         
         if (!modelName) {
@@ -28,8 +25,8 @@ require([
         
         var service = mvc.createService();
         
-        // PERBAIKAN: URL endpoint diubah agar sesuai dengan restmap.conf yang baru
-        service.post("/services/gemini_setup/gemini_api_setup", {
+        // PERBAIKAN: Menggunakan absolute path Namespace Splunk dan menunjuk ke spesifik stanza 'gemini_config'
+        service.post("/servicesNS/nobody/gemini_soc_assistant/gemini_setup/gemini_api_setup/gemini_config", {
             api_key: apiKey,
             model_name: modelName
         }, function(err, response) {
@@ -37,7 +34,6 @@ require([
                 $('#status_msg').css("color", "green").text("Konfigurasi Berhasil Disimpan!");
                 setTimeout(function(){ location.reload(); }, 2000);
             } else {
-                // PERBAIKAN: Parsing objek error agar terbaca manusia
                 var errorMsg = "Unknown Error";
                 if (err && err.data && err.data.messages && err.data.messages.length > 0) {
                     errorMsg = err.data.messages[0].text;
@@ -46,7 +42,6 @@ require([
                 } else {
                     errorMsg = JSON.stringify(err);
                 }
-                
                 $('#status_msg').css("color", "red").text("Gagal menyimpan: " + errorMsg);
             }
         });

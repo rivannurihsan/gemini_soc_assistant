@@ -3,12 +3,12 @@ import splunk.entity as entity
 
 class GeminiSetupHandler(admin.MConfigHandler):
     def setup(self):
-        if self.requestedAction == admin.ACTION_EDIT:
+        # Menerima request baik sebagai Edit maupun Create
+        if self.requestedAction in [admin.ACTION_EDIT, admin.ACTION_CREATE]:
             for arg in ['api_key', 'model_name']:
                 self.supportedArgs.addOptArg(arg)
 
     def handleList(self, confInfo):
-        # Ambil model saat ini dari file conf
         confDict = self.readConf("gemini_settings")
         if confDict:
             for stanza, settings in confDict.items():
@@ -16,30 +16,30 @@ class GeminiSetupHandler(admin.MConfigHandler):
                     confInfo[stanza].append(key, val)
 
     def handleEdit(self, confInfo):
-        name = self.callerArgs.id
         args = self.callerArgs
         
-        # Simpan Model ke gemini_settings.conf
+        # Simpan Model
         if 'model_name' in args:
             self.writeConf('gemini_settings', 'gemini_config', {'model_name': args['model_name'][0]})
         
-        # Simpan API Key ke Storage Passwords (Aman)
+        # Simpan API Key dengan aman
         if 'api_key' in args:
             api_key = args['api_key'][0]
             try:
-                # Coba buat kredensial baru
                 entity.createEntity('admin/passwords', {
                     'name': 'gemini_api_user',
                     'password': api_key,
                     'realm': 'gemini_soc_assistant_realm'
                 }, sessionKey=self.getSessionKey())
             except Exception as e:
-                # Jika sudah ada (Error EntityExists), lakukan UPDATE (Rotasi Key)
                 try:
                     ent = entity.getEntity('admin/passwords', 'gemini_soc_assistant_realm:gemini_api_user', sessionKey=self.getSessionKey())
                     ent['password'] = api_key
                     entity.setEntity(ent, sessionKey=self.getSessionKey())
                 except Exception as update_err:
                     raise Exception(f"Gagal memperbarui API Key: {str(update_err)}")
+
+    # Duplikasi fungsi agar handleCreate menjalankan logika yang sama persis
+    handleCreate = handleEdit
 
 admin.init(GeminiSetupHandler, admin.CONTEXT_NONE)
