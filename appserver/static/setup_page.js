@@ -24,10 +24,12 @@ require([
             return;
         }
 
-        $('#status_msg').text("Sedang menyimpan...");
+        $('#status_msg').css("color", "blue").text("Sedang menyimpan...");
         
         var service = mvc.createService();
-        service.post("/services/gemini_setup/gemini_config", {
+        
+        // PERBAIKAN: URL endpoint disesuaikan dengan 'members' di restmap.conf (gemini_settings)
+        service.post("/services/gemini_setup/gemini_settings", {
             api_key: apiKey,
             model_name: modelName
         }, function(err, response) {
@@ -35,7 +37,17 @@ require([
                 $('#status_msg').css("color", "green").text("Konfigurasi Berhasil Disimpan!");
                 setTimeout(function(){ location.reload(); }, 2000);
             } else {
-                $('#status_msg').css("color", "red").text("Gagal menyimpan: " + err);
+                // PERBAIKAN: Parsing objek error agar terbaca manusia
+                var errorMsg = "Unknown Error";
+                if (err && err.data && err.data.messages && err.data.messages.length > 0) {
+                    errorMsg = err.data.messages[0].text;
+                } else if (err && err.statusText) {
+                    errorMsg = err.status + " " + err.statusText;
+                } else {
+                    errorMsg = JSON.stringify(err);
+                }
+                
+                $('#status_msg').css("color", "red").text("Gagal menyimpan: " + errorMsg);
             }
         });
     });
