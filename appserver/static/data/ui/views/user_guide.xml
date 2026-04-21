@@ -1,0 +1,80 @@
+<dashboard>
+  <label>Panduan Penggunaan Gemini SOC Assistant</label>
+  <description>Dokumentasi interaktif dan contoh kueri untuk analisis log berbasis AI.</description>
+  
+  <row>
+    <panel>
+      <html>
+        <h2>🚀 Pengantar</h2>
+        <p>Aplikasi ini memungkinkan Anda melakukan analisis log menggunakan <b>Google Gemini</b> atau <b>Gemma AI</b> langsung dari kolom pencarian Splunk menggunakan perintah <code>| geminianalyze</code>.</p>
+        
+        <hr/>
+        
+        <h2>🛠️ Sintaks Dasar</h2>
+        <pre>| geminianalyze prompt="Instruksi Anda" [field=nama_field] [model=nama_model] [batch=true|false]</pre>
+        
+        <table style="width:100%; border: 1px solid #ddd; border-collapse: collapse;">
+          <tr style="background-color: #f2f2f2;">
+            <th style="padding: 10px; border: 1px solid #ddd;">Parameter</th>
+            <th style="padding: 10px; border: 1px solid #ddd;">Deskripsi</th>
+            <th style="padding: 10px; border: 1px solid #ddd;">Default</th>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><b>prompt</b></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Instruksi atau pertanyaan yang dikirim ke AI.</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Wajib diisi</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><b>field</b></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Field log yang ingin dianalisis.</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">_raw</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><b>model</b></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Menentukan model tertentu (misal: <code>gemma-2-27b-it</code>).</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Sesuai Setup UI</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><b>batch</b></td>
+            <td style="padding: 10px; border: 1px solid #ddd;"><code>true</code>: Analisis gabungan (korelasi).<br/><code>false</code>: Analisis per baris log.</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">true</td>
+          </tr>
+        </table>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>💡 Contoh Query untuk Investigasi SOC</title>
+      <html>
+        <h3>1. Analisis Korelasi (Mode Batch)</h3>
+        <p>Gunakan ini untuk menemukan pola serangan dari banyak log sekaligus.</p>
+        <pre>index=firewall action=blocked | head 50
+| geminianalyze prompt="Cari pola anomali dari log ini. Apakah ada indikasi port scanning atau brute force dari IP yang sama?" batch=true</pre>
+
+        <h3>2. Analisis Detail Alert (Mode Single)</h3>
+        <p>Gunakan ini untuk membedah setiap alert secara spesifik.</p>
+        <pre>index=edr sourcetype="sentinelone:alerts"
+| head 5
+| geminianalyze prompt="Jelaskan teknik MITRE ATT&amp;CK yang relevan dengan alert ini dan berikan langkah mitigasinya." batch=false
+| table _time, endpoint_name, threat_name, gemini_analysis</pre>
+
+        <h3>3. Pembuatan Ringkasan untuk Laporan OJK/Management</h3>
+        <pre>index=security_summary severity=high
+| head 10
+| geminianalyze prompt="Buatkan ringkasan eksekutif formal mengenai 10 insiden keamanan ini untuk laporan rutin bulanan." model="gemini-1.5-pro"</pre>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <html>
+        <div style="background-color: #e7f3fe; border-left: 6px solid #2196F3; padding: 15px;">
+          <p><strong>Tips:</strong> Untuk hasil terbaik, berikan instruksi yang spesifik. Misalnya: <i>"Berikan output dalam format JSON"</i> atau <i>"Identifikasi alamat IP sumber yang paling mencurigakan"</i>.</p>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>
