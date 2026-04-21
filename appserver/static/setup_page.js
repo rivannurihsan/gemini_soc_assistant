@@ -1,11 +1,41 @@
 require([
     "jquery",
     "splunkjs/mvc",
-    "splunkjs/mvc/utils",
     "splunkjs/mvc/simplexml/ready!"
-], function($, mvc, utils) {
+], function($, mvc) {
     
-    // Logika UI Dropdown
+    var service = mvc.createService({ app: "gemini_soc_assistant", owner: "nobody" });
+
+    // ==========================================
+    // FITUR BARU: MUAT KONFIGURASI SAAT HALAMAN DIBUKA
+    // ==========================================
+    service.get("properties/gemini_settings/gemini_config", {}, function(err, response) {
+        if (response && response.data) {
+            var savedModel = response.data.model_name;
+            
+            if (savedModel) {
+                // Cek apakah model yang tersimpan ada di opsi dropdown standar kita
+                var modelExists = $('#model_select option[value="' + savedModel + '"]').length > 0;
+                
+                if (modelExists) {
+                    $('#model_select').val(savedModel); // Pilih otomatis
+                } else {
+                    // Jika itu model kustom, tampilkan kotak input teksnya
+                    $('#model_select').val('custom');
+                    $('#custom_model_div').show();
+                    $('#custom_model_input').val(savedModel);
+                }
+            }
+        }
+        
+        // Ubah teks bantuan di kolom API Key untuk keamanan
+        $('#api_key_input').attr('placeholder', '******** (Biarkan kosong jika tidak ingin mengubah API Key)');
+    });
+
+
+    // ==========================================
+    // LOGIKA UI & PENYIMPANAN
+    // ==========================================
     $('#model_select').on('change', function() {
         if ($(this).val() === 'custom') {
             $('#custom_model_div').show();
@@ -24,75 +54,50 @@ require([
             return;
         }
 
-        $('#status_msg').css("color", "blue").text("Sedang menghubungi server Splunk...");
+        $('#status_msg').css("color", "blue").text("Menyimpan pengaturan ke Splunk...");
         
-        // Membangun URL Absolut yang menembak langsung ke Core Splunkd
-        var basePath = utils.make_url('/splunkd/__raw/servicesNS/nobody/gemini_soc_assistant/admin/gemini_setup/gemini_api_setup');
-
-        // Fungsi 1: Mencoba melakukan UPDATE (Edit)
-        function updateConfig() {
-            $.ajax({
-                url: basePath + '/gemini_config',
-                type: 'POST',
-                data: {
-                    api_key: apiKey,
-                    model_name: modelName
-                },
-                success: function() {
-                    $('#status_msg').css("color", "green").text("Konfigurasi Berhasil Diperbarui!");
-                    setTimeout(function(){ location.reload(); }, 2000);
-                },
-                error: function(xhr) {
-                    // Jika Splunk bilang "404 Not Found" (belum ada), kita jalankan fungsi CREATE
-                    if (xhr.status === 404) {
-                        createConfig();
-                    } else {
-                        showError(xhr);
-                    }
-                }
-            });
-        }
-
-        // Fungsi 2: Mencoba melakukan CREATE baru
-        function createConfig() {
-            $.ajax({
-                url: basePath,
-                type: 'POST',
-                data: {
-                    name: 'gemini_config', // Parameter name WAJIB saat Create di Splunk
-                    api_key: apiKey,
-                    model_name: modelName
-                },
-                success: function() {
-                    $('#status_msg').css("color", "green").text("Konfigurasi Baru Berhasil Dibuat!");
-                    setTimeout(function(){ location.reload(); }, 2000);
-                },
-                error: function(xhr) {
-                    showError(xhr);
-                }
-            });
-        }
-
-        // Fungsi 3: Menangkap dan membedah Error Detail dari Backend
-        function showError(xhr) {
-            var errorMsg = "Unknown Error";
-            try {
-                // Mencoba mem-parsing response JSON bawaan Splunkd
-                var responseJson = JSON.parse(xhr.responseText);
-                if (responseJson && responseJson.messages && responseJson.messages.length > 0) {
-                    errorMsg = responseJson.messages[0].text;
-                }
-            } catch(e) {
-                // Fallback jika response bukan JSON
-                errorMsg = xhr.responseText || xhr.statusText;
+        // TAHAP 1: Simpan Model ke gemini_settings.conf
+        service.post("properties/gemini_settings/gemini_config", {
+            "model_name": modelName
+        }, function(err, response) {
+            if (err && err.status !== 200 && err.status !== 201) {
+                var errMsg = err.errorText || err.statusText || "Unknown Error";
+                $('#status_msg').css("color", "red").text("Gagal menyimpan Model: " + errMsg);
+                console.error("Error Model:", err);
+                return;
             }
-            
-            var finalOutput = "Gagal menyimpan: [HTTP " + xhr.status + "] " + errorMsg;
-            $('#status_msg').css("color", "red").text(finalOutput);
-            console.error("--- SPLUNK REST API ERROR DETAILS ---", xhr);
-        }
 
-        // Trigger pertama: Mulai dari mencoba Update
-        updateConfig();
+            // TAHAP 2: Simpan API Key (HANYA JIKA KOLOM DIISI OLEH USER)
+            if (apiKey && apiKey.trim() !== "") {
+                $('#status_msg').text("Model tersimpan. Sedang mengamankan API Key...");
+                
+                var realmName = "gemini_soc_assistant_realm";
+                var userName = "gemini_api_user";
+                var credId = encodeURIComponent(realmName + ":" + userName + ":");
+
+                // Hapus kredensial lama terlebih dahulu
+                service.del("storage/passwords/" + credId, {}, function() {
+                    
+                    // Simpan yang baru
+                    service.post("storage/passwords", {
+                        name: userName,
+                        password: apiKey,
+                        realm: realmName
+                    }, function(err2, resp2) {
+                        if (err2 && err2.status !== 200 && err2.status !== 201) {
+                            var errMsg2 = err2.errorText || err2.statusText || "Unknown Error";
+                            $('#status_msg').css("color", "red").text("Gagal mengamankan API Key: " + errMsg2);
+                        } else {
+                            $('#status_msg').css("color", "green").text("Model & API Key Baru Berhasil Disimpan!");
+                            setTimeout(function(){ location.reload(); }, 2000);
+                        }
+                    });
+                });
+            } else {
+                // Jika kolom API Key kosong, berarti user hanya ingin mengganti Model saja
+                $('#status_msg').css("color", "green").text("Model Berhasil Diperbarui! (API Key tidak diubah)");
+                setTimeout(function(){ location.reload(); }, 2000);
+            }
+        });
     });
 });
