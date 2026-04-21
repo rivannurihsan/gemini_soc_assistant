@@ -1,6 +1,3 @@
-Berikut adalah versi final dan lengkap dari `README.md` yang merangkum seluruh arsitektur, *use case* SOC, dan konfigurasi *zero-dependency* yang telah kita buat. Anda bisa langsung menyalin seluruh isi kotak di bawah ini:
-
-```markdown
 # Gemini SOC Assistant
 
 **Gemini SOC Assistant** adalah aplikasi kustom untuk Splunk Enterprise yang mengintegrasikan kemampuan analitik dari Google Gemini dan Gemma AI secara langsung ke dalam alur kerja Security Operations Center (SOC). 
