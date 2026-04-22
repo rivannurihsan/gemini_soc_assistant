@@ -11,12 +11,10 @@ class GeminiAnalyzeCommand(StreamingCommand):
     prompt = Option(require=True)
     field = Option(require=False, default="_raw")
     model = Option(require=False)
-    # V2: Default sekarang adalah False (Single Mode)
     batch = Option(require=False, default=False, validate=validators.Boolean())
     role = Option(require=False)
 
     def get_credentials(self, service):
-        """Membaca API Key dari Credential Store Search Head"""
         for pw in service.storage_passwords:
             if pw.realm == "gemini_soc_assistant_realm":
                 return pw.clear_password
@@ -37,34 +35,45 @@ class GeminiAnalyzeCommand(StreamingCommand):
         }
         
         if system_instruction:
-            payload["system_instruction"] = {
-                "role": "system",
+            # PERBAIKAN: Menggunakan format camelCase sesuai standar ketat Google REST API
+            payload["systemInstruction"] = {
                 "parts": [{"text": system_instruction}]
             }
 
         req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'})
+        
         try:
             with urllib.request.urlopen(req, timeout=60) as response:
                 res_data = json.loads(response.read().decode('utf-8'))
                 return res_data['candidates'][0]['content']['parts'][0]['text']
+                
+        except urllib.error.HTTPError as e:
+            # PERBAIKAN: Ekstraksi pesan asli dari Google agar analis SOC tahu pasti penyebabnya
+            error_response = e.read().decode('utf-8')
+            try:
+                error_json = json.loads(error_response)
+                return f"API Error ({e.code}): {error_json['error']['message']}"
+            except:
+                return f"HTTP Error ({e.code}): {error_response}"
+                
         except Exception as e:
-            return f"Error: {str(e)}"
+            return f"System Error: {str(e)}"
 
     def prepare(self):
         service = client.connect(token=self._metadata.searchinfo.session_key)
         self.api_key = self.get_credentials(service)
         
-        # Penentuan Model: SPL > UI/Conf > Default
-        setup_model = self.get_conf_value(service, 'gemini_config', 'model_name', 'gemini-3-flash')
+        # Logika Pemilihan Model
+        setup_model = self.get_conf_value(service, 'gemini_config', 'model_name', 'gemini-1.5-flash')
         self.active_model = self.model if self.model else setup_model
         
-        # Penentuan Role: SPL > UI/Conf > Default
+        # Logika Pemilihan Role
         setup_role = self.get_conf_value(service, 'gemini_config', 'default_role', 'soc_analyst')
         self.active_role_name = self.role if self.role else setup_role
         self.system_prompt = self.get_conf_value(service, f"role:{self.active_role_name}", "instructions")
 
         if not self.api_key:
-            raise Exception("API Key belum terkonfigurasi. Harap selesaikan setup di UI aplikasi.")
+            raise Exception("API Key belum terkonfigurasi di Credential Store.")
 
     def stream(self, records):
         if self.batch:
@@ -75,7 +84,7 @@ class GeminiAnalyzeCommand(StreamingCommand):
             
             if not all_events: return
 
-            combined_logs = "\n--- EVENT ---\n".join(all_events)
+            combined_logs = "\n--- EVENT LOG ---\n".join(all_events)
             full_prompt = f"{self.prompt}\n\n[Analisis Kolektif {len(all_events)} Log]:\n{combined_logs}"
             
             analysis = self.call_gemini_api(full_prompt, self.system_prompt)
@@ -89,7 +98,7 @@ class GeminiAnalyzeCommand(StreamingCommand):
             for record in records:
                 log_content = record.get(self.field, "")
                 if log_content:
-                    full_prompt = f"{self.prompt}\n\nData:\n{log_content}"
+                    full_prompt = f"{self.prompt}\n\nData Log:\n{log_content}"
                     record['gemini_analysis'] = self.call_gemini_api(full_prompt, self.system_prompt)
                     record['analysis_mode'] = "single"
                     record['ai_model'] = self.active_model
