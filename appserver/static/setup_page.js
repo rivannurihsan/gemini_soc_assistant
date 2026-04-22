@@ -17,15 +17,15 @@ require([
             }
         });
 
-        // Cek Model & Role
-        service.get("properties/gemini_settings/gemini_config", {}, function(err, resp) {
+        // Cek Model & Role menggunakan endpoint 'configs/conf-gemini_settings' yang lebih stabil
+        service.get("configs/conf-gemini_settings/gemini_config", {}, function(err, resp) {
             var roleToSet = "soc_analyst"; // Fallback awal
             
-            if (resp && resp.data) {
-                var savedModel = resp.data.model_name;
+            if (resp && resp.data && resp.data.entry && resp.data.entry.length > 0) {
+                var content = resp.data.entry[0].content;
+                var savedModel = content.model_name;
                 
                 if (savedModel) {
-                    // Periksa apakah model yang tersimpan ada di dalam daftar <select> standar
                     var isStandardModel = $('#model_select option').filter(function() { 
                         return $(this).val() === savedModel; 
                     }).length > 0;
@@ -34,24 +34,21 @@ require([
                         $('#model_select').val(savedModel);
                         $('#custom_model_div').hide();
                     } else {
-                        // Jika tidak ada di daftar, otomatis pilih custom dan tampilkan text input-nya
                         $('#model_select').val("custom");
                         $('#custom_model_input').val(savedModel);
                         $('#custom_model_div').show();
                     }
                 }
                 
-                // Set default role jika ada
-                if (resp.data.default_role) {
-                    roleToSet = resp.data.default_role;
+                if (content.default_role) {
+                    roleToSet = content.default_role;
                 }
             }
-            // Panggil fungsi loadRoles dan wajibkan ia memilih 'roleToSet' setelah memuat list
             loadRoles(roleToSet);
         });
     }
 
-    // 2. Tampilkan/Sembunyikan Input Model Custom secara dinamis
+    // 2. Tampilkan/Sembunyikan Input Model Custom dinamis
     $('#model_select').on('change', function() {
         if ($(this).val() === 'custom') {
             $('#custom_model_div').show();
@@ -60,7 +57,7 @@ require([
         }
     });
 
-    // 3. Load Daftar Roles dari file .conf
+    // 3. Load Daftar Roles
     function loadRoles(selectedRole) {
         service.get("configs/conf-gemini_settings", {}, function(err, resp) {
             var dropdown = $('#default_role_select');
@@ -75,69 +72,98 @@ require([
                 });
             }
             
-            // Pilih role yang tersimpan di backend
             if (selectedRole) {
                 dropdown.val(selectedRole);
             }
         });
     }
 
-    // 4. Tambah/Update Role
+    // 4. Tambah/Update Role (Tahan terhadap Error 409)
     $('#add_role_btn').on('click', function() {
         var rName = $('#new_role_name').val().trim().toLowerCase().replace(/\s+/g, '_');
         var rInst = $('#role_instructions').val();
         if(!rName || !rInst) return alert("Harap isi nama role dan instruksi sistemnya!");
 
-        service.post("configs/conf-gemini_settings", { name: "role:" + rName, instructions: rInst }, function(err, r) {
+        var roleStanza = "role:" + rName;
+        $('#status_msg').css("color", "blue").text("Menyimpan Role...");
+        
+        // Coba buat baru
+        service.post("configs/conf-gemini_settings", { name: roleStanza, instructions: rInst }, function(err, r) {
             if (err && err.status === 409) {
-                service.post("properties/gemini_settings/role:" + rName, { instructions: rInst }, function() {
-                    alert("Role berhasil diperbarui!"); 
-                    loadRoles(rName); // Refresh dropdown
+                // Jika sudah ada (409 Conflict), lakukan Update
+                service.post("configs/conf-gemini_settings/" + roleStanza, { instructions: rInst }, function(err2, r2) {
+                    if (!err2) {
+                        $('#status_msg').css("color", "green").text("Role berhasil diperbarui!");
+                        loadRoles(rName);
+                    } else {
+                        $('#status_msg').css("color", "red").text("Gagal memperbarui role: " + err2.status);
+                    }
                 });
+            } else if (!err) {
+                $('#status_msg').css("color", "green").text("Role baru berhasil disimpan!");
+                loadRoles(rName);
             } else {
-                alert("Role baru berhasil disimpan!"); 
-                loadRoles(rName); // Refresh dropdown
+                $('#status_msg').css("color", "red").text("Gagal menyimpan role: " + err.status);
             }
+            setTimeout(function() { $('#status_msg').text(""); }, 3000);
         });
     });
 
-    // 5. Simpan Konfigurasi Utama
+    // 5. Simpan Konfigurasi Utama (Tahan terhadap Error 404)
     $('#save_btn').on('click', function() {
         var key = $('#api_key_input').val();
-        
-        // Cek model mana yang dipilih (Dropdown biasa atau Input Custom)
         var selectedDropdownModel = $('#model_select').val();
         var finalModel = (selectedDropdownModel === 'custom') ? $('#custom_model_input').val().trim() : selectedDropdownModel;
-        
         var finalRole = $('#default_role_select').val();
 
         if (!finalModel) return alert("Silakan pilih atau ketik nama model AI Anda!");
 
-        $('#status_msg').css("color", "blue").text("Menyimpan ke server...");
+        $('#status_msg').css("color", "blue").text("Menyimpan konfigurasi ke server...");
 
-        // Simpan Model & Role
-        service.post("properties/gemini_settings/gemini_config", { 
-            model_name: finalModel, 
-            default_role: finalRole 
-        }, function(err, resp) {
-            
-            // Simpan API Key jika tidak termasking
+        var payload = { model_name: finalModel, default_role: finalRole };
+
+        // Fungsi lanjutan untuk menyimpan API Key
+        function saveApiKeyAndFinish() {
             if (key && key !== "********" && key.trim() !== "") {
                 var credId = encodeURIComponent(REALM + ":" + USER + ":");
                 service.del("storage/passwords/" + credId, {}, function() {
-                    service.post("storage/passwords", { name: USER, password: key, realm: REALM }, function() {
-                        done();
+                    service.post("storage/passwords", { name: USER, password: key, realm: REALM }, function(errKey, respKey) {
+                        if (errKey) {
+                            $('#status_msg').css("color", "red").text("Konfigurasi tersimpan, tapi gagal menyimpan API Key.");
+                        } else {
+                            done();
+                        }
                     });
                 });
             } else { 
                 done(); 
+            }
+        }
+
+        // Coba Update konfigurasi yang ada
+        service.post("configs/conf-gemini_settings/gemini_config", payload, function(err, resp) {
+            if (err && err.status === 404) {
+                // Jika tidak ditemukan (404), paksa Buat Baru
+                payload.name = "gemini_config";
+                service.post("configs/conf-gemini_settings", payload, function(err2, resp2) {
+                    if (err2) {
+                        $('#status_msg').css("color", "red").text("Gagal membuat konfigurasi baru. Status " + err2.status);
+                    } else {
+                        saveApiKeyAndFinish();
+                    }
+                });
+            } else if (err) {
+                $('#status_msg').css("color", "red").text("Gagal menyimpan konfigurasi. Status " + err.status);
+            } else {
+                // Jika update sukses
+                saveApiKeyAndFinish();
             }
         });
     });
 
     function done() {
         service.post("apps/local/gemini_soc_assistant", { configured: true }, function() {
-            $('#status_msg').css("color", "green").text("✓ Tersimpan! Memuat ulang halaman...");
+            $('#status_msg').css("color", "green").text("✓ Konfigurasi Tersimpan! Memuat ulang halaman...");
             setTimeout(function() { window.location.reload(); }, 1500);
         });
     }

@@ -26,19 +26,21 @@ class GeminiAnalyzeCommand(StreamingCommand):
         except:
             return default
 
-    def call_gemini_api(self, text_payload, system_instruction=None):
+    def call_gemini_api(self, text_payload, system_instruction=None, role_name="default"):
         safe_model = urllib.parse.quote(self.active_model, safe='')
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{safe_model}:generateContent?key={self.api_key}"
         
-        payload = {
-            "contents": [{"parts": [{"text": text_payload}]}]
-        }
-        
+        # PERBAIKAN SUPER AMAN:
+        # Menggabungkan System Instruction ke dalam isi prompt secara manual.
+        # Ini mencegah Error 400 karena Gemma dan model lain tidak mendukung parameter systemInstruction terpisah di API.
         if system_instruction:
-            # PERBAIKAN: Menggunakan format camelCase sesuai standar ketat Google REST API
-            payload["systemInstruction"] = {
-                "parts": [{"text": system_instruction}]
-            }
+            final_text = f"=== SYSTEM INSTRUCTIONS (Role: {role_name}) ===\n{system_instruction}\n\n=== USER REQUEST ===\n{text_payload}"
+        else:
+            final_text = text_payload
+
+        payload = {
+            "contents": [{"parts": [{"text": final_text}]}]
+        }
 
         req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'})
         
@@ -48,7 +50,6 @@ class GeminiAnalyzeCommand(StreamingCommand):
                 return res_data['candidates'][0]['content']['parts'][0]['text']
                 
         except urllib.error.HTTPError as e:
-            # PERBAIKAN: Ekstraksi pesan asli dari Google agar analis SOC tahu pasti penyebabnya
             error_response = e.read().decode('utf-8')
             try:
                 error_json = json.loads(error_response)
@@ -63,11 +64,10 @@ class GeminiAnalyzeCommand(StreamingCommand):
         service = client.connect(token=self._metadata.searchinfo.session_key)
         self.api_key = self.get_credentials(service)
         
-        # Logika Pemilihan Model
-        setup_model = self.get_conf_value(service, 'gemini_config', 'model_name', 'gemini-1.5-flash')
+        # Load Model & Role
+        setup_model = self.get_conf_value(service, 'gemini_config', 'model_name', 'gemma-4-31b-it')
         self.active_model = self.model if self.model else setup_model
         
-        # Logika Pemilihan Role
         setup_role = self.get_conf_value(service, 'gemini_config', 'default_role', 'soc_analyst')
         self.active_role_name = self.role if self.role else setup_role
         self.system_prompt = self.get_conf_value(service, f"role:{self.active_role_name}", "instructions")
@@ -87,7 +87,8 @@ class GeminiAnalyzeCommand(StreamingCommand):
             combined_logs = "\n--- EVENT LOG ---\n".join(all_events)
             full_prompt = f"{self.prompt}\n\n[Analisis Kolektif {len(all_events)} Log]:\n{combined_logs}"
             
-            analysis = self.call_gemini_api(full_prompt, self.system_prompt)
+            # Memasukkan nama role untuk header instruksi
+            analysis = self.call_gemini_api(full_prompt, self.system_prompt, self.active_role_name)
             yield {
                 "gemini_analysis": analysis,
                 "analysis_mode": "batch",
@@ -99,7 +100,7 @@ class GeminiAnalyzeCommand(StreamingCommand):
                 log_content = record.get(self.field, "")
                 if log_content:
                     full_prompt = f"{self.prompt}\n\nData Log:\n{log_content}"
-                    record['gemini_analysis'] = self.call_gemini_api(full_prompt, self.system_prompt)
+                    record['gemini_analysis'] = self.call_gemini_api(full_prompt, self.system_prompt, self.active_role_name)
                     record['analysis_mode'] = "single"
                     record['ai_model'] = self.active_model
                     record['ai_role'] = self.active_role_name

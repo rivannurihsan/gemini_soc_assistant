@@ -11,8 +11,8 @@
         
         <label>Pilih Model AI Default:</label><br/>
         <select id="model_select" style="width:450px;">
+          <option value="gemma-4-31b-it">Gemma 4 31B IT (Open Model Leader)</option>
           <option value="gemini-3.1-pro">Gemini 3.1 Pro (High-End Reasoning)</option>
-          <option value="gemma-4-31B-it">Gemma 4 31B IT (Open Model Leader)</option>
           <option value="gemini-3-flash">Gemini 3 Flash (Fast Balanced)</option>
           <option value="gemma-4-26B-A4B-it">Gemma 4 26B A4B (Ultra Fast MoE)</option>
           <option value="shieldgemma-2">ShieldGemma 2 (Safety &amp; Moderation)</option>
