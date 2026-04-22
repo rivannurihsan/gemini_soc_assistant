@@ -7,107 +7,87 @@ require([
     const REALM = "gemini_soc_assistant_realm";
     const USER = "gemini_api_user";
 
-    // --- FUNGSI LOAD DATA AWAL ---
-    function initializeSetup() {
-        // 1. Muat Model & Role dari file konfigurasi lokal Search Head
-        service.get("properties/gemini_settings/gemini_config", {}, function(err, resp) {
-            if (resp && resp.data) {
-                if (resp.data.model_name) {
-                    $('#model_select').val(resp.data.model_name);
-                }
-                loadRoles(resp.data.default_role || "default");
-            } else {
-                loadRoles("default");
+    // 1. Inisialisasi Form & Masking
+    function initSetup() {
+        // Load API Key Status
+        service.get("storage/passwords", { search: "realm=" + REALM }, function(err, resp) {
+            if (resp && resp.data && resp.data.entry && resp.data.entry.length > 0) {
+                $('#api_key_input').val("********").addClass("secure-mask");
+                $('#key_info').text("Key sudah terkonfigurasi secara aman.").css("color", "green");
             }
         });
 
-        // 2. Cek apakah API Key sudah tersimpan di Credential Store
-        service.get("storage/passwords", { search: "realm=" + REALM }, function(err, resp) {
-            if (resp && resp.data && resp.data.entry && resp.data.entry.length > 0) {
-                $('#api_key_input').val("********").attr("disabled", false);
-                $('#key_status_label').text("(Telah Terkonfigurasi)").css("color", "green");
+        // Load Model & Default Role
+        service.get("properties/gemini_settings/gemini_config", {}, function(err, resp) {
+            if (resp && resp.data) {
+                $('#model_select').val(resp.data.model_name);
+                loadRoles(resp.data.default_role);
+            } else {
+                loadRoles("soc_analyst");
             }
         });
     }
 
-    // --- FUNGSI LOAD & UPDATE ROLE ---
+    // 2. Load Roles ke Dropdown
     function loadRoles(selectedRole) {
         service.get("configs/conf-gemini_settings", {}, function(err, resp) {
-            var roleDropdown = $('#default_role_select');
-            roleDropdown.empty().append('<option value="default">default (Tanpa Instruksi Khusus)</option>');
-            
+            var dropdown = $('#default_role_select');
+            dropdown.empty();
             if (resp && resp.data && resp.data.entry) {
                 resp.data.entry.forEach(function(e) {
                     if (e.name.startsWith("role:")) {
                         var rName = e.name.split(":")[1];
-                        roleDropdown.append($('<option>').val(rName).text(rName));
+                        dropdown.append($('<option>').val(rName).text(rName));
                     }
                 });
             }
-            if (selectedRole) roleDropdown.val(selectedRole);
+            if (selectedRole) dropdown.val(selectedRole);
         });
     }
 
+    // 3. Tambah/Update Role
     $('#add_role_btn').on('click', function() {
-        var name = $('#new_role_name').val().trim().toLowerCase().replace(/\s+/g, '_');
-        var inst = $('#role_instructions').val();
-        if(!name || !inst) return alert("Harap isi Nama Role dan Instruksi Sistem!");
+        var rName = $('#new_role_name').val().trim().toLowerCase().replace(/\s+/g, '_');
+        var rInst = $('#role_instructions').val();
+        if(!rName || !rInst) return alert("Isi nama dan instruksi role!");
 
-        $('#role_status').text("Menyimpan role...").css("color", "blue");
-        
-        service.post("configs/conf-gemini_settings", { name: "role:" + name, instructions: inst }, function(err, r) {
-            // Jika role sudah ada (Error 409), maka lakukan update
+        service.post("configs/conf-gemini_settings", { name: "role:" + rName, instructions: rInst }, function(err, r) {
             if (err && err.status === 409) {
-                service.post("properties/gemini_settings/role:" + name, { instructions: inst }, function() {
-                    $('#role_status').text("Role berhasil diperbarui!").css("color", "green");
-                    $('#new_role_name').val(''); $('#role_instructions').val('');
-                    loadRoles(name);
+                service.post("properties/gemini_settings/role:" + rName, { instructions: rInst }, function() {
+                    alert("Role diperbarui!"); loadRoles(rName);
                 });
             } else {
-                $('#role_status').text("Role baru berhasil ditambahkan!").css("color", "green");
-                $('#new_role_name').val(''); $('#role_instructions').val('');
-                loadRoles(name);
+                alert("Role berhasil disimpan!"); loadRoles(rName);
             }
-            setTimeout(function() { $('#role_status').text(""); }, 3000);
         });
     });
 
-    // --- LOGIKA SIMPAN UTAMA ---
+    // 4. Simpan Konfigurasi Utama
     $('#save_btn').on('click', function() {
         var key = $('#api_key_input').val();
         var model = $('#model_select').val();
         var role = $('#default_role_select').val();
 
-        $('#status_msg').css("color", "blue").text("Menyimpan konfigurasi...");
+        $('#status_msg').css("color", "blue").text("Menyimpan...");
 
-        // A. Simpan perubahan Model & Role ke file conf di Search Head
-        service.post("properties/gemini_settings/gemini_config", { 
-            model_name: model, 
-            default_role: role 
-        }, function() {
-            
-            // B. Jika API Key diubah oleh user (bukan ********), perbarui Credential Store
-            if (key && key !== "********" && key.trim() !== "") {
+        service.post("properties/gemini_settings/gemini_config", { model_name: model, default_role: role }, function() {
+            if (key !== "********" && key.trim() !== "") {
                 var credId = encodeURIComponent(REALM + ":" + USER + ":");
                 service.del("storage/passwords/" + credId, {}, function() {
                     service.post("storage/passwords", { name: USER, password: key, realm: REALM }, function() {
-                        finishConfig();
+                        done();
                     });
                 });
-            } else {
-                // Jika user tidak mengganti API Key, langsung sukses
-                finishConfig();
-            }
+            } else { done(); }
         });
     });
 
-    function finishConfig() {
+    function done() {
         service.post("apps/local/gemini_soc_assistant", { configured: true }, function() {
-            $('#status_msg').css("color", "green").text("Semua Perubahan Berhasil Disimpan!");
+            $('#status_msg').css("color", "green").text("Tersimpan! Memuat ulang...");
             setTimeout(function() { window.location.reload(); }, 1500);
         });
     }
 
-    // Jalankan fungsi load saat halaman siap
-    initializeSetup();
+    initSetup();
 });
