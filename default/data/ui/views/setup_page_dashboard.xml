@@ -14,7 +14,7 @@
           <option value="gemma-4-31b-it">Gemma 4 31B IT (Open Model Leader)</option>
           <option value="gemini-3.1-pro">Gemini 3.1 Pro (High-End Reasoning)</option>
           <option value="gemini-3-flash">Gemini 3 Flash (Fast Balanced)</option>
-          <option value="gemma-4-26B-A4B-it">Gemma 4 26B A4B (Ultra Fast MoE)</option>
+          <option value="gemma-4-26b-a4b-it">Gemma 4 26B A4B (Ultra Fast MoE)</option>
           <option value="shieldgemma-2">ShieldGemma 2 (Safety &amp; Moderation)</option>
           <option value="custom">-- Kustom / Masukkan Model Lainnya --</option>
         </select><br/>
@@ -30,10 +30,10 @@
         
         <hr style="margin:25px 0;"/>
         
-        <h2>🎭 Role Management</h2>
-        <p>Definisikan instruksi sistem khusus untuk AI agar hasil analisis lebih tajam.</p>
-        <input type="text" id="new_role_name" placeholder="Nama Role (misal: ahli_firewall)" style="width:450px;"/><br/><br/>
-        <textarea id="role_instructions" placeholder="Instruksi sistem (System Prompt)..." style="width:100%; height:80px;"></textarea><br/>
+        <h2>🎭 Role Management (Bahasa, Format &amp; Persona)</h2>
+        <p>Definisikan instruksi sistem khusus untuk AI. Anda bebas menentukan <b>Bahasa, Format Output (Markdown/JSON/Plaintext), dan Tingkat Teknis</b> di sini.</p>
+        <input type="text" id="new_role_name" placeholder="Nama Role (misal: json_extractor_id)" style="width:450px;"/><br/><br/>
+        <textarea id="role_instructions" placeholder="Contoh: Anda adalah analis malware. Bahasa: Indonesia. Format: Markdown. Aturan Ketat: Langsung berikan hasil analisis teknis, dilarang basa-basi, dilarang mengulang prompt..." style="width:100%; height:100px;"></textarea><br/>
         <button id="add_role_btn" class="btn btn-secondary" style="margin-top: 10px;">Simpan / Update Role Baru</button>
         
         <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
