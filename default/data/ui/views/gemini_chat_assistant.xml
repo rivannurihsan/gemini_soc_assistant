@@ -1,102 +1,159 @@
-<dashboard version="1.1" theme="dark">
-  <label>💬 Gemini SOC Chat Assistant</label>
-  <description>Tanya langsung ke AI tentang log, payload, atau ancaman keamanan. Tidak perlu menulis SPL panjang.</description>
-  <row>
-    <panel>
-      <html>
-        <style>
-          .cw{font-family:'Segoe UI',sans-serif}
-          .ch{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);padding:20px 24px;border-radius:10px;margin-bottom:18px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
-          .ch h2{color:#fff;margin:0 0 4px 0;font-size:1.4em}
-          .ch p{color:#7ec8e3;margin:0;font-size:.88em}
-          .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-          .pill{background:rgba(255,255,255,.12);color:#b0d4e8;padding:3px 11px;border-radius:20px;font-size:.78em}
-          .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
-          .fl{color:#7ec8e3;font-size:.78em;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-          select.cs,textarea.ct{background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;color:#e0e0e0;padding:9px 11px;font-size:.9em;width:100%;box-sizing:border-box;transition:border-color .2s}
-          select.cs:focus,textarea.ct:focus{border-color:#00b4d8;outline:none}
-          textarea.ct{resize:vertical;min-height:80px;font-family:monospace}
-          textarea#cp{min-height:56px;font-family:'Segoe UI',sans-serif}
-          .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-          .qrow{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
-          .ql{color:#7ec8e3;font-size:.78em;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-          .qb{background:#1a2e3a;color:#7ec8e3;border:1px solid #2a4a5a;border-radius:20px;padding:5px 13px;font-size:.8em;cursor:pointer;transition:all .2s}
-          .qb:hover{background:#00b4d8;color:#fff;border-color:#00b4d8}
-          .sbar{display:flex;align-items:center;gap:12px;margin-top:6px}
-          .ba{background:linear-gradient(135deg,#00b4d8,#0077a8);color:#fff;border:none;border-radius:6px;padding:10px 26px;font-size:.95em;font-weight:600;cursor:pointer}
-          .ba:hover{opacity:.85}
-          .bc{background:transparent;color:#ef476f;border:1px solid #ef476f;border-radius:6px;padding:10px 18px;font-size:.88em;cursor:pointer}
-          .bc:hover{background:#ef476f;color:#fff}
-          .cc{color:#555;font-size:.8em}
-          .tip{padding:12px;background:#0f2c1e;border-left:4px solid #06d6a0;border-radius:4px;color:#aaa;font-size:.85em;margin-top:14px}
-        </style>
-        <div class="cw">
-          <div class="ch">
-            <h2>🤖 Gemini SOC Chat Assistant V2.1</h2>
-            <p>Paste log atau payload → pilih persona → tanyakan apa saja. AI akan langsung memberikan analisis murni.</p>
-            <div class="pills">
-              <span class="pill">✅ Anti-Echo V2.1</span>
-              <span class="pill">✅ 5 Persona AI</span>
-              <span class="pill">✅ MITRE ATT&amp;CK</span>
-              <span class="pill">✅ Flexible Input</span>
-            </div>
-          </div>
-          <div class="grid2">
-            <div class="fg"><label class="fl">🧠 Model AI</label>
-              <select id="cm" class="cs">
-                <option value="gemma-4-31b-it">Gemma 4 31B IT — Recommended</option>
-                <option value="gemini-3.1-pro">Gemini 3.1 Pro — Kompleks</option>
-                <option value="gemini-3-flash">Gemini 3 Flash — Cepat</option>
-              </select>
-            </div>
-            <div class="fg"><label class="fl">🎭 Persona AI</label>
-              <select id="cr" class="cs">
-                <option value="soc_clean_report">SOC Analyst — Laporan Insiden</option>
-                <option value="threat_hunter">Threat Hunter — IOC &amp; MITRE</option>
-                <option value="malware_analyst">Malware Analyst — Payload</option>
-                <option value="executive_report">Executive — Level Direksi</option>
-                <option value="json_extractor">JSON Extractor — SOAR Ready</option>
-              </select>
-            </div>
-          </div>
-          <div class="ql">⚡ Quick Prompts</div>
-          <div class="qrow">
-            <button class="qb" onclick="sp('Identifikasi apakah ini brute force, password spray, atau credential stuffing. Petakan ke teknik MITRE ATT&amp;CK.')">🔐 Brute Force</button>
-            <button class="qb" onclick="sp('Analisis payload ini: cari persistence, C2 communication, dan defense evasion techniques.')">🦠 Malware</button>
-            <button class="qb" onclick="sp('Identifikasi semua IOC dan buat ringkasan ancaman berdasarkan data ini.')">🎯 IOC Hunt</button>
-            <button class="qb" onclick="sp('Buatkan ringkasan insiden untuk CISO dalam bahasa formal, non-teknis, fokus dampak bisnis.')">📊 Exec Report</button>
-            <button class="qb" onclick="sp('Analisis pola trafik jaringan ini dan identifikasi anomali yang mencurigakan.')">🌐 Network</button>
-          </div>
-          <div class="fg">
-            <label class="fl">📋 Data Mentah (Log / Payload / JSON)</label>
-            <textarea id="cd" class="ct" placeholder="Paste log, payload, atau teks mentah di sini..."></textarea>
-          </div>
-          <div class="fg">
-            <label class="fl">💬 Pertanyaan / Instruksi</label>
-            <textarea id="cp" class="ct" placeholder="Tuliskan pertanyaan atau instruksi analisis Anda..."></textarea>
-          </div>
-          <div class="sbar">
-            <button class="ba" onclick="runChat()">🚀 Analisis Sekarang</button>
-            <button class="bc" onclick="clearAll()">🗑️ Bersihkan</button>
-            <span class="cc" id="cc">0 karakter</span>
-          </div>
-          <div class="tip">💡 <b>Tips:</b> Hasil analisis akan tampil langsung di halaman Splunk Search. Gunakan menu <b>💡 Dashboard Generator</b> di navigasi atas untuk membuat dashboard Splunk otomatis berbasis AI.</div>
-        </div>
-        <script>
-          function sp(t){document.getElementById('cp').value=t;}
-          function clearAll(){document.getElementById('cd').value='';document.getElementById('cp').value='';document.getElementById('cc').textContent='0 karakter';}
-          document.getElementById('cd').addEventListener('input',function(){document.getElementById('cc').textContent=this.value.length+' karakter';});
-          function runChat(){
-            var d=document.getElementById('cd').value||'No data';
-            var p=document.getElementById('cp').value;
-            var m=document.getElementById('cm').value;
-            var r=document.getElementById('cr').value;
-            if(!p.trim()){alert('Harap isi pertanyaan/instruksi terlebih dahulu.');return;}
-            var q='| makeresults | eval _raw='+JSON.stringify(d)+' | geminianalyze prompt='+JSON.stringify(p)+' role='+JSON.stringify(r)+' model='+JSON.stringify(m)+' | table gemini_analysis';
-            window.location.href=window.location.origin+'/en-US/app/gemini_soc_assistant/search?q='+encodeURIComponent(q)+'&earliest=-1m&latest=now';
+<dashboard version="2" theme="dark">
+    <label>💬 Gemini Studio Chat</label>
+    <description>Berkonsultasi dengan AI SOC Assistant dalam balutan Dashboard Studio yang interaktif dan elegan.</description>
+    <definition><![CDATA[
+{
+  "visualizations": {
+    "viz_chat_output": {
+      "type": "splunk.table",
+      "dataSources": {
+        "primary": "ds_chat"
+      },
+      "options": {
+        "columnFormat": {
+          "gemini_analysis": {
+            "width": 900
           }
-        </script>
-      </html>
-    </panel>
-  </row>
+        }
+      }
+    },
+    "viz_bg_main": {
+      "type": "splunk.rectangle",
+      "options": {
+        "fillColor": "#0F2027",
+        "strokeColor": "#00B4D8",
+        "strokeWidth": 2
+      }
+    },
+    "viz_header_text": {
+      "type": "splunk.markdown",
+      "options": {
+        "markdown": "## 🤖 Gemini SOC Chat Assistant (Studio Edition)\n\nPaste log mentah, pilih persona, dan ajukan instruksi analitik mendalam secara seketika. AI akan merespons langsung dalam tabel di bawah dengan rekomendasi teknis dan pemetaan **MITRE ATT&CK**.",
+        "backgroundColor": "transparent"
+      }
+    },
+    "viz_pills": {
+      "type": "splunk.markdown",
+      "options": {
+        "markdown": "<span style=\"background:rgba(255,255,255,0.12); color:#b0d4e8; padding:4px 12px; border-radius:20px; font-size:12px; margin-right:8px;\">✅ Anti-Echo V2.1</span> <span style=\"background:rgba(255,255,255,0.12); color:#b0d4e8; padding:4px 12px; border-radius:20px; font-size:12px; margin-right:8px;\">✅ 5 Persona AI</span> <span style=\"background:rgba(255,255,255,0.12); color:#b0d4e8; padding:4px 12px; border-radius:20px; font-size:12px;\">✅ Dashboard Studio Layout</span>",
+        "backgroundColor": "transparent"
+      }
+    }
+  },
+  "dataSources": {
+    "ds_chat": {
+      "type": "ds.search",
+      "options": {
+        "query": "| makeresults | eval _raw=$raw_data|s$ | geminianalyze prompt=$prompt|s$ role=$role|s$ model=$model|s$ | table gemini_analysis",
+        "queryParameters": {
+          "earliest": "-1m",
+          "latest": "now"
+        }
+      }
+    }
+  },
+  "inputs": {
+    "input_model": {
+      "type": "input.dropdown",
+      "options": {
+        "items": [
+          {"label": "Gemma 4 31B IT", "value": "gemma-4-31b-it"},
+          {"label": "Gemini 3.1 Pro", "value": "gemini-3.1-pro"},
+          {"label": "Gemini 3 Flash", "value": "gemini-3-flash"}
+        ],
+        "defaultValue": "gemma-4-31b-it",
+        "token": "model"
+      },
+      "title": "🧠 Model AI"
+    },
+    "input_role": {
+      "type": "input.dropdown",
+      "options": {
+        "items": [
+          {"label": "SOC Analyst", "value": "soc_clean_report"},
+          {"label": "Threat Hunter", "value": "threat_hunter"},
+          {"label": "Malware Analyst", "value": "malware_analyst"},
+          {"label": "Executive", "value": "executive_report"},
+          {"label": "JSON Extractor", "value": "json_extractor"}
+        ],
+        "defaultValue": "soc_clean_report",
+        "token": "role"
+      },
+      "title": "🎭 Persona AI"
+    },
+    "input_raw": {
+      "type": "input.text",
+      "options": {
+        "defaultValue": "EventID=4625 User=Administrator",
+        "token": "raw_data"
+      },
+      "title": "📋 Data Mentah / Log (Paste di sini)"
+    },
+    "input_prompt": {
+      "type": "input.text",
+      "options": {
+        "defaultValue": "Tolong analisa log ini dan temukan potensial brute force.",
+        "token": "prompt"
+      },
+      "title": "💬 Pertanyaan / Instruksi Analisis (Lalu tekan Enter)"
+    }
+  },
+  "layout": {
+    "type": "absolute",
+    "options": {
+      "display": "auto",
+      "backgroundColor": "#070E14"
+    },
+    "structure": [
+      {
+        "item": "viz_bg_main",
+        "type": "block",
+        "position": {"x": 20, "y": 20, "w": 1160, "h": 150}
+      },
+      {
+        "item": "viz_header_text",
+        "type": "block",
+        "position": {"x": 40, "y": 40, "w": 1120, "h": 80}
+      },
+      {
+        "item": "viz_pills",
+        "type": "block",
+        "position": {"x": 40, "y": 120, "w": 1120, "h": 40}
+      },
+      {
+        "item": "input_model",
+        "type": "input",
+        "position": {"x": 20, "y": 190, "w": 280, "h": 60}
+      },
+      {
+        "item": "input_role",
+        "type": "input",
+        "position": {"x": 320, "y": 190, "w": 280, "h": 60}
+      },
+      {
+        "item": "input_raw",
+        "type": "input",
+        "position": {"x": 20, "y": 270, "w": 1160, "h": 60}
+      },
+      {
+        "item": "input_prompt",
+        "type": "input",
+        "position": {"x": 20, "y": 350, "w": 1160, "h": 60}
+      },
+      {
+        "item": "viz_chat_output",
+        "type": "block",
+        "position": {"x": 20, "y": 430, "w": 1160, "h": 500}
+      }
+    ]
+  }
+}
+    ]]></definition>
+    <meta type="hiddenElements"><![CDATA[
+{
+    "hideEdit": false,
+    "hideOpenInSearch": false,
+    "hideExport": false
+}
+    ]]></meta>
 </dashboard>
