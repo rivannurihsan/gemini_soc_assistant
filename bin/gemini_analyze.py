@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # =============================================================================
-# Gemini SOC Assistant - gemini_analyze.py
-# Version: 2.0
+# Gemini SOC Assistant - gemini_analyze.py  |  Version: 2.1
 # Changelog:
-#   - V2: Menggunakan Gemini API 'system_instruction' field secara native
-#         agar sistem instruksi dan data pengguna benar-benar terpisah.
-#   - V2: Temperature dinaikkan ke 0.4 agar output lebih ekspansif & detail.
-#   - V2: maxOutputTokens ditambahkan agar analisis tidak terpotong.
-#   - V2: Cleaning pipeline diperkuat: buang echo prompt, buang tag bocor.
-#   - V2: Field 'gemini_analysis_length' ditambahkan untuk monitoring kualitas.
+#   V2.1: Strict output cleaning pipeline + few-shot negative examples
+#         dikirim ke AI agar AI TIDAK PERNAH mengulang prompt.
+#         Temperature diturunkan ke 0.2 untuk konsistensi lebih tinggi.
+#         maxOutputTokens naik ke 8192 untuk analisis yang lebih panjang.
 # =============================================================================
 import sys
 import json
@@ -26,9 +23,6 @@ class GeminiAnalyzeCommand(StreamingCommand):
     batch  = Option(require=False, default=False, validate=validators.Boolean())
     role   = Option(require=False)
 
-    # -----------------------------------------------------------------------
-    # Helpers: credentials & config
-    # -----------------------------------------------------------------------
     def get_credentials(self, service):
         for pw in service.storage_passwords:
             if pw.realm == "gemini_soc_assistant_realm":
@@ -41,9 +35,6 @@ class GeminiAnalyzeCommand(StreamingCommand):
         except Exception:
             return default
 
-    # -----------------------------------------------------------------------
-    # Helpers: data extraction
-    # -----------------------------------------------------------------------
     def extract_log_data(self, record):
         val = record.get(self.field)
         if val and str(val).strip():
@@ -51,86 +42,92 @@ class GeminiAnalyzeCommand(StreamingCommand):
         row_data = {k: v for k, v in record.items() if not k.startswith('_')}
         return json.dumps(row_data, ensure_ascii=False) if row_data else "No data."
 
-    # -----------------------------------------------------------------------
-    # Output cleaning: hapus echo, tag bocor, dan noise
-    # -----------------------------------------------------------------------
     def clean_output(self, text, user_prompt):
-        # 1. Buang jika AI membocorkan tag XML sistem
-        for tag in ["</user_request>", "</system_rules>", "<system_rules>", "<user_request>"]:
+        """Multi-layer cleaning to eliminate echo and noise."""
+        # Layer 1: Strip leaked XML tags
+        for tag in ["</user_request>", "</system_rules>", "<system_rules>",
+                    "<user_request>", "<data>", "</data>"]:
             if tag in text:
                 text = text.split(tag)[-1]
 
-        # 2. Buang jika AI mengulang marker header kita
-        for marker in [
-            "HASIL ANALISIS:",
-            "ANALISIS KOMPREHENSIF:",
-            "HASIL ANALISIS KOMPREHENSIF:",
-        ]:
-            if text.startswith(marker):
-                text = text[len(marker):]
+        # Layer 2: Strip marker headers the AI echoes back
+        markers = [
+            "HASIL ANALISIS:", "ANALISIS KOMPREHENSIF:",
+            "HASIL ANALISIS KOMPREHENSIF:", "ANALYSIS OUTPUT:",
+        ]
+        for m in markers:
+            if text.upper().startswith(m.upper()):
+                text = text[len(m):]
 
-        # 3. Buang jika AI membeo (echo) prompt pengguna di awal output
-        #    Hapus hingga 3 baris pertama yang mengandung kata dari prompt
-        prompt_keywords = set(w.lower() for w in user_prompt.split() if len(w) > 4)
+        # Layer 3: Strip lines that echo the user prompt verbatim
+        prompt_lower = user_prompt.lower()
         lines = text.strip().splitlines()
-        cleaned_lines = []
-        skip_count = 0
+        cleaned = []
         for line in lines:
-            if skip_count < 3 and any(kw in line.lower() for kw in prompt_keywords):
-                # Heuristik: baris pendek di awal yang hanya mengulang prompt -> skip
-                if len(line.strip()) < 120:
-                    skip_count += 1
-                    continue
-            cleaned_lines.append(line)
+            # If the line is short and is a near-verbatim repeat of the prompt, drop it
+            if len(line.strip()) < 200 and line.strip().lower() in prompt_lower:
+                continue
+            cleaned.append(line)
+        text = "\n".join(cleaned)
 
-        return "\n".join(cleaned_lines).strip()
+        # Layer 4: Strip common AI filler openers
+        fillers = [
+            "berikut adalah analisis", "berikut analisis", "berikut hasil analisis",
+            "here is the analysis", "here is my analysis", "based on the provided",
+            "berdasarkan data yang diberikan", "berdasarkan log yang diberikan",
+            "saya akan menganalisis", "i will analyze",
+        ]
+        text_lower = text.lower().lstrip()
+        for filler in fillers:
+            if text_lower.startswith(filler):
+                # Remove that opening sentence (up to first newline or period)
+                idx = text.lower().find(filler)
+                rest = text[idx + len(filler):]
+                end = min(
+                    (rest.find("\n") if rest.find("\n") != -1 else len(rest)),
+                    (rest.find(".") + 1 if rest.find(".") != -1 else len(rest)),
+                )
+                text = rest[end:].strip()
+                break
 
-    # -----------------------------------------------------------------------
-    # Gemini API call — V2: pakai 'system_instruction' native field
-    # -----------------------------------------------------------------------
+        return text.strip()
+
     def call_gemini_api(self, text_payload, system_instruction, role_name):
         safe_model = urllib.parse.quote(self.active_model, safe='')
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{safe_model}:generateContent?key={self.api_key}"
-        )
+        url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+               f"{safe_model}:generateContent?key={self.api_key}")
 
-        # --- System Instruction (dikirim via field terpisah, bukan di prompt) ---
-        # Ini adalah cara NATIVE Gemini untuk memisahkan 'aturan sistem' dari 'data user'.
-        # Hasilnya jauh lebih bersih — AI tidak perlu "melihat" instruksi sebagai bagian data.
+        # ── System Block ────────────────────────────────────────────────────
+        # Dikirim via field 'system_instruction' native Gemini API.
+        # Berisi: instruksi role + larangan eksplisit + few-shot negatif.
         system_block = (
             f"{system_instruction}\n\n"
-            f"ATURAN WAJIB OUTPUT:\n"
-            f"1. Berikan analisis yang DETAIL, KOMPREHENSIF, dan MENDALAM.\n"
-            f"2. DILARANG KERAS mengulang atau membeo (echo) teks dari task/prompt pengguna.\n"
-            f"3. DILARANG memberi kata pengantar, basa-basi, salam, atau kalimat pembuka.\n"
-            f"4. DILARANG menulis ulang data mentah apa adanya tanpa analisis.\n"
-            f"5. Langsung mulai dengan TEMUAN, bukan dengan 'Berikut adalah analisis...'.\n"
-            f"6. Gunakan format Markdown yang rapi (heading, bullet, bold) agar mudah dibaca.\n"
-            f"7. Akhiri dengan bagian 'Rekomendasi Tindakan' yang actionable dan spesifik."
+            "═══ MANDATORY OUTPUT RULES ═══\n"
+            "RULE 1: Start your response IMMEDIATELY. Do NOT write any intro sentence or greeting.\n"
+            "RULE 2: NEVER repeat, paraphrase, or echo the user's TASK or question.\n"
+            "RULE 3: NEVER write sentences like 'Based on the log...', 'Here is the analysis...', "
+            "'Berikut analisis...', 'Berdasarkan data...', or similar filler openers.\n"
+            "RULE 4: NEVER include the raw data back in your output verbatim.\n"
+            "RULE 5: Format your output strictly according to the instructions (Markdown, JSON, or XML). "
+            "Do not add conversational text outside of the requested format.\n\n"
+            "── FEW-SHOT ANTI-PATTERN EXAMPLES (DO NOT DO THESE) ──\n"
+            "❌ BAD: 'Berikut adalah analisis log EventID=4625 yang Anda kirimkan:'\n"
+            "❌ BAD: 'Anda meminta saya untuk mengidentifikasi brute force...'\n"
+            "❌ BAD: 'Based on the provided data, here is my analysis:'\n"
+            "✅ GOOD: Start directly with the actual formatted response (e.g., Markdown headers, JSON brackets, or XML tags)."
         )
 
-        # --- User Turn (hanya berisi task + data mentah) ---
-        user_turn = (
-            f"TASK: {self.prompt}\n\n"
-            f"DATA LOG:\n{text_payload}"
-        )
+        # ── User Turn ───────────────────────────────────────────────────────
+        user_turn = f"TASK: {self.prompt}\n\nDATA:\n{text_payload}"
 
         payload = {
-            "system_instruction": {
-                "parts": [{"text": system_block}]
-            },
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [{"text": user_turn}]
-                }
-            ],
+            "system_instruction": {"parts": [{"text": system_block}]},
+            "contents": [{"role": "user", "parts": [{"text": user_turn}]}],
             "generationConfig": {
-                "temperature":    0.4,    # Cukup kreatif untuk analisis ekspansif, cukup deterministik untuk konsistensi
-                "topK":           40,
-                "topP":           0.95,
-                "maxOutputTokens": 4096,  # Cegah analisis terpotong
+                "temperature":     0.2,   # Low for strict rule-following
+                "topK":            40,
+                "topP":            0.90,
+                "maxOutputTokens": 8192,
             }
         }
 
@@ -141,52 +138,39 @@ class GeminiAnalyzeCommand(StreamingCommand):
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=90) as response:
-                res_data    = json.loads(response.read().decode('utf-8'))
-                raw_text    = res_data['candidates'][0]['content']['parts'][0]['text']
-                clean_text  = self.clean_output(raw_text, self.prompt)
+            with urllib.request.urlopen(req, timeout=90) as resp:
+                res_data   = json.loads(resp.read().decode('utf-8'))
+                raw_text   = res_data['candidates'][0]['content']['parts'][0]['text']
+                clean_text = self.clean_output(raw_text, self.prompt)
                 return clean_text, user_turn
-
         except urllib.error.HTTPError as e:
-            error_body = e.read().decode('utf-8')
-            return f"[API Error {e.code}]: {error_body}", user_turn
+            return f"[API Error {e.code}]: {e.read().decode('utf-8')}", user_turn
         except Exception as e:
             return f"[System Error]: {str(e)}", user_turn
 
-    # -----------------------------------------------------------------------
-    # prepare: ambil kredensial & konfigurasi sebelum stream dimulai
-    # -----------------------------------------------------------------------
     def prepare(self):
-        service          = client.connect(token=self._metadata.searchinfo.session_key)
-        self.api_key     = self.get_credentials(service)
-        self.active_model = (
-            self.model if self.model
-            else self.get_conf_value(service, 'gemini_config', 'model_name', 'gemma-4-31b-it')
-        )
-        active_role        = (
-            self.role if self.role
-            else self.get_conf_value(service, 'gemini_config', 'default_role', 'soc_clean_report')
-        )
+        service           = client.connect(token=self._metadata.searchinfo.session_key)
+        self.api_key      = self.get_credentials(service)
+        self.active_model = (self.model or
+                             self.get_conf_value(service, 'gemini_config', 'model_name', 'gemma-4-31b-it'))
+        active_role        = (self.role or
+                              self.get_conf_value(service, 'gemini_config', 'default_role', 'soc_clean_report'))
         self.system_prompt = self.get_conf_value(service, f"role:{active_role}", "instructions", "")
         self.role_name     = active_role
-
         if not self.api_key:
-            raise Exception("[Gemini SOC v2] API Key belum terkonfigurasi. Buka menu Setup.")
+            raise Exception("[Gemini SOC v2.1] API Key belum terkonfigurasi. Buka menu Setup.")
 
-    # -----------------------------------------------------------------------
-    # stream: proses rekaman satu per satu atau batch
-    # -----------------------------------------------------------------------
     def stream(self, records):
         if self.batch:
             all_logs = [self.extract_log_data(r) for r in records]
             if not all_logs:
                 return
-            combined   = "\n---\n".join(all_logs)
-            analysis, sent_prompt = self.call_gemini_api(combined, self.system_prompt, self.role_name)
+            combined          = "\n---\n".join(all_logs)
+            analysis, sent    = self.call_gemini_api(combined, self.system_prompt, self.role_name)
             yield {
                 "gemini_analysis":        analysis,
                 "gemini_analysis_length": str(len(analysis)),
-                "gemini_task_sent":       sent_prompt,
+                "gemini_task_sent":       sent,
                 "analysis_mode":          "batch",
                 "ai_model":               self.active_model,
                 "ai_role":                self.role_name,
@@ -194,12 +178,12 @@ class GeminiAnalyzeCommand(StreamingCommand):
             }
         else:
             for record in records:
-                log_content           = self.extract_log_data(record)
-                analysis, sent_prompt = self.call_gemini_api(log_content, self.system_prompt, self.role_name)
+                log_content        = self.extract_log_data(record)
+                analysis, sent     = self.call_gemini_api(log_content, self.system_prompt, self.role_name)
                 record.update({
                     "gemini_analysis":        analysis,
                     "gemini_analysis_length": str(len(analysis)),
-                    "gemini_task_sent":       sent_prompt,
+                    "gemini_task_sent":       sent,
                     "analysis_mode":          "single",
                     "ai_model":               self.active_model,
                     "ai_role":                self.role_name,

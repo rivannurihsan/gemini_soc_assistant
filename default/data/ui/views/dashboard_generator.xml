@@ -1,0 +1,69 @@
+<dashboard version="1.1" theme="dark">
+  <label>💡 AI Dashboard Generator</label>
+  <description>Jelaskan dashboard Splunk yang Anda inginkan, dan AI akan membuatkan kode Simple XML-nya untuk Anda.</description>
+
+  <row>
+    <panel>
+      <html>
+        <style>
+          .cw{font-family:'Segoe UI',sans-serif; max-width: 100%;}
+          .ch{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);padding:20px 24px;border-radius:10px;margin-bottom:18px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+          .ch h2{color:#fff;margin:0 0 6px 0;font-size:1.5em}
+          .ch p{color:#7ec8e3;margin:0;font-size:.9em}
+          .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+          .fl{color:#7ec8e3;font-size:.82em;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+          textarea.ct{background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;color:#e0e0e0;padding:12px;font-size:1em;width:100%;box-sizing:border-box;transition:border-color .2s;resize:vertical;min-height:120px;font-family:'Segoe UI',sans-serif}
+          textarea.ct:focus{border-color:#00b4d8;outline:none}
+          .ql{color:#7ec8e3;font-size:.8em;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+          .qrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+          .qb{background:#1a2e3a;color:#7ec8e3;border:1px solid #2a4a5a;border-radius:20px;padding:6px 14px;font-size:.82em;cursor:pointer;transition:all .2s}
+          .qb:hover{background:#00b4d8;color:#fff;border-color:#00b4d8}
+          .sbar{display:flex;align-items:center;gap:14px;margin-top:4px}
+          .ba{background:linear-gradient(135deg,#00b4d8,#0077a8);color:#fff;border:none;border-radius:6px;padding:11px 28px;font-size:1em;font-weight:600;cursor:pointer;transition:opacity .2s}
+          .ba:hover{opacity:.85}
+          .bc{background:transparent;color:#ef476f;border:1px solid #ef476f;border-radius:6px;padding:11px 20px;font-size:.9em;cursor:pointer;transition:all .2s}
+          .bc:hover{background:#ef476f;color:#fff}
+          .tip{padding:12px;background:#0f2c1e;border-left:4px solid #06d6a0;border-radius:4px;color:#aaa;font-size:.85em;margin-top:16px}
+        </style>
+        <div class="cw">
+          <div class="ch">
+            <h2>💡 AI Dashboard Generator</h2>
+            <p>Jelaskan kebutuhan Anda, AI akan merancang layout, query SPL, dan menghasilkan kode XML lengkap yang siap disalin.</p>
+          </div>
+          
+          <div class="ql">✨ Ide Dashboard (Klik untuk menggunakan)</div>
+          <div class="qrow">
+            <button class="qb" onclick="sp('Buatkan dashboard form untuk monitoring gagal login (EventCode 4625). Beri input dropdown untuk memilih User, input text untuk IP, dan input time range. Tampilkan panel single value untuk total gagal login, timechart gagal login seiring waktu, dan tabel detail kejadian.')">🔐 Failed Login Monitor</button>
+            <button class="qb" onclick="sp('Buat dashboard eksekutif untuk memantau serangan Firewall. Tampilkan top 10 IP penyerang (pie chart), tren serangan harian (area chart), dan peta choropleth sebaran serangan berdasarkan negara. Gunakan dark theme.')">🔥 Firewall Executive</button>
+            <button class="qb" onclick="sp('Rancang dashboard untuk Windows Security monitoring. Tampilkan panel-panel terkait pembuatan akun baru, penghapusan akun, dan perubahan grup admin. Sertakan input time.')">🪟 Windows Security</button>
+          </div>
+
+          <div class="fg">
+            <label class="fl">📝 Deskripsikan Dashboard Anda</label>
+            <textarea id="cp" class="ct" placeholder="Contoh: Buatkan saya dashboard untuk memantau traffic jaringan yang di-block. Tampilkan timechart dan daftar IP sumber paling agresif..."></textarea>
+          </div>
+          
+          <div class="sbar">
+            <button class="ba" onclick="generateDashboard()">🪄 Generate XML Code</button>
+            <button class="bc" onclick="clearInput()">🗑️ Bersihkan</button>
+          </div>
+
+          <div class="tip">💡 <b>Cara Penggunaan:</b> Setelah hasil pencarian muncul, klik hasil pada kolom <b>gemini_analysis</b>, copy teks tersebut, lalu paste pada bagian <b>Source</b> saat Anda membuat Dashboard baru di Splunk. Pastikan Anda memilih model yang Advanced seperti Gemini 3.1 Pro atau Gemma 4 31B IT di Setup Page untuk hasil terbaik.</div>
+        </div>
+        
+        <script>
+          function sp(t){document.getElementById('cp').value=t;}
+          function clearInput(){document.getElementById('cp').value='';}
+          function generateDashboard(){
+            var p=document.getElementById('cp').value;
+            if(!p.trim()){alert('Harap deskripsikan dashboard yang Anda inginkan terlebih dahulu.');return;}
+            
+            var q='| makeresults | eval _raw="" | geminianalyze prompt='+JSON.stringify(p)+' role="splunk_dashboard_dev" | table gemini_analysis';
+            
+            window.location.href=window.location.origin+'/en-US/app/gemini_soc_assistant/search?q='+encodeURIComponent(q)+'&earliest=-1m&latest=now';
+          }
+        </script>
+      </html>
+    </panel>
+  </row>
+</dashboard>
