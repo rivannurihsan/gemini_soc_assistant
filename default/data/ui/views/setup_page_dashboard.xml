@@ -1,44 +1,64 @@
 <dashboard script="setup_page.js">
-  <label>Gemini &amp; Gemma API Configuration (V2.0)</label>
+  <label>🛠️ Gemini &amp; Gemma API Configuration (V2.0)</label>
   <row>
     <html>
-      <div style="padding:20px; background:#fff; border:1px solid #ddd; border-radius:5px;">
-        <h2>🛠️ Konfigurasi Model &amp; API</h2>
-        
-        <label>Google AI API Key:</label><br/>
-        <input type="password" id="api_key_input" style="width:450px;" placeholder="Masukkan API Key baru..."/>
-        <span id="key_info" style="margin-left:10px; font-size:13px; font-weight:bold;"></span><br/><br/>
-        
-        <label>Pilih Model AI Default:</label><br/>
-        <select id="model_select" style="width:450px;">
-          <option value="gemma-4-31b-it">Gemma 4 31B IT (Open Model Leader)</option>
-          <option value="gemini-3.1-pro">Gemini 3.1 Pro (High-End Reasoning)</option>
-          <option value="gemini-3-flash">Gemini 3 Flash (Fast Balanced)</option>
-          <option value="gemma-4-26b-a4b-it">Gemma 4 26B A4B (Ultra Fast MoE)</option>
-          <option value="shieldgemma-2">ShieldGemma 2 (Safety &amp; Moderation)</option>
-          <option value="custom">-- Kustom / Masukkan Model Lainnya --</option>
+      <div style="padding:24px;background:#1a2332;border:1px solid #2a4a5a;border-radius:8px;color:#ddd;font-family:sans-serif;">
+        <h2 style="color:#00b4d8;margin-top:0;">🛠️ Konfigurasi Model &amp; API</h2>
+
+        <label style="color:#aaa;font-size:0.9em;">Google AI API Key:</label><br/>
+        <input type="password" id="api_key_input" style="width:480px;padding:8px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;" placeholder="Masukkan API Key baru..."/>
+        <span id="key_info" style="margin-left:10px;font-size:13px;font-weight:bold;"></span><br/><br/>
+
+        <label style="color:#aaa;font-size:0.9em;">Pilih Model AI Default:</label><br/>
+        <select id="model_select" style="width:480px;padding:8px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;">
+          <option value="gemma-4-31b-it">Gemma 4 31B IT — Open Model Terbaik (Recommended)</option>
+          <option value="gemini-3.1-pro">Gemini 3.1 Pro — High-End Reasoning (Terlambat, Paling Cerdas)</option>
+          <option value="gemini-3-flash">Gemini 3 Flash — Fast &amp; Balanced</option>
+          <option value="gemma-4-26b-a4b-it">Gemma 4 26B A4B — Ultra Fast MoE</option>
+          <option value="shieldgemma-2">ShieldGemma 2 — Safety &amp; Moderation</option>
+          <option value="custom">-- Kustom / Masukkan Nama Model Lain --</option>
         </select><br/>
 
-        <div id="custom_model_div" style="margin-top: 10px; display:none;">
-          <label style="color:#d93f3c;">Masukkan Nama Model Kustom:</label><br/>
-          <input type="text" id="custom_model_input" style="width:450px;" placeholder="contoh: gemini-3.1-flash-lite"/>
+        <div id="custom_model_div" style="margin-top:10px;display:none;">
+          <label style="color:#ef476f;font-size:0.9em;">Masukkan Nama Model Kustom:</label><br/>
+          <input type="text" id="custom_model_input" style="width:480px;padding:8px;background:#0d1b22;border:1px solid #ef476f;border-radius:4px;color:#fff;margin-top:4px;" placeholder="contoh: gemini-2.5-flash-preview-04-17"/>
         </div>
         <br/>
 
-        <label>Role Analis Default:</label><br/>
-        <select id="default_role_select" style="width:450px;"></select>
-        
-        <hr style="margin:25px 0;"/>
-        
-        <h2>🎭 Role Management (Bahasa, Format &amp; Persona)</h2>
-        <p>Definisikan instruksi sistem khusus untuk AI. Anda bebas menentukan <b>Bahasa, Format Output (Markdown/JSON/Plaintext), dan Tingkat Teknis</b> di sini.</p>
-        <input type="text" id="new_role_name" placeholder="Nama Role (misal: json_extractor_id)" style="width:450px;"/><br/><br/>
-        <textarea id="role_instructions" placeholder="Contoh: Anda adalah analis malware. Bahasa: Indonesia. Format: Markdown. Aturan Ketat: Langsung berikan hasil analisis teknis, dilarang basa-basi, dilarang mengulang prompt..." style="width:100%; height:100px;"></textarea><br/>
-        <button id="add_role_btn" class="btn btn-secondary" style="margin-top: 10px;">Simpan / Update Role Baru</button>
-        
-        <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
-          <button id="save_btn" class="btn btn-primary btn-lg">Terapkan Semua Konfigurasi</button>
-          <span id="status_msg" style="margin-left:15px; font-weight:bold; font-size:14px;"></span>
+        <label style="color:#aaa;font-size:0.9em;">Role Analis Default:</label><br/>
+        <select id="default_role_select" style="width:480px;padding:8px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;">
+          <option value="soc_clean_report">soc_clean_report — Laporan Insiden SOC (Default)</option>
+          <option value="threat_hunter">threat_hunter — IOC, MITRE ATT&amp;CK, Kill Chain</option>
+          <option value="malware_analyst">malware_analyst — Analisis Malware &amp; Payload</option>
+          <option value="executive_report">executive_report — Laporan Level CISO/Direksi</option>
+          <option value="json_extractor">json_extractor — Ekstrak IOC ke JSON (untuk SOAR)</option>
+        </select>
+
+        <hr style="margin:28px 0;border-color:#2a4a5a;"/>
+
+        <h2 style="color:#00b4d8;margin-top:0;">🎭 Role Management — Buat Role Kustom</h2>
+        <p style="color:#aaa;font-size:0.9em;line-height:1.6;">
+          Definisikan instruksi sistem AI yang kustom. Tentukan <b>bahasa output, format (Markdown/JSON), tingkat teknis,
+          dan template laporan</b> sesuai kebutuhan tim Anda.
+        </p>
+
+        <label style="color:#aaa;font-size:0.9em;">Nama Role Baru:</label><br/>
+        <input type="text" id="new_role_name" placeholder="Nama Role (misal: dfir_indonesia)" style="width:480px;padding:8px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;"/><br/><br/>
+
+        <label style="color:#aaa;font-size:0.9em;">Instruksi Sistem (System Prompt):</label><br/>
+        <textarea id="role_instructions" style="width:100%;height:120px;padding:10px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;font-family:monospace;" placeholder="Contoh: Anda adalah analis DFIR. Bahasa: Indonesia. Format: Markdown. Aturan: Langsung berikan temuan teknis, sertakan mapping MITRE ATT&amp;CK, dan akhiri dengan rekomendasi containment yang spesifik."></textarea><br/>
+        <button id="add_role_btn" class="btn btn-secondary" style="margin-top:10px;">💾 Simpan / Update Role</button>
+
+        <div style="margin-top:32px;border-top:1px solid #2a4a5a;padding-top:24px;">
+          <button id="save_btn" class="btn btn-primary btn-lg">✅ Terapkan Semua Konfigurasi</button>
+          <span id="status_msg" style="margin-left:16px;font-weight:bold;font-size:14px;"></span>
+        </div>
+
+        <div style="margin-top:24px;padding:14px;background:#0f2c1e;border-left:4px solid #06d6a0;border-radius:4px;">
+          <b style="color:#06d6a0;">💡 Tips V2:</b>
+          <span style="color:#aaa;font-size:0.9em;"> Saat membuat instruksi role kustom, selalu akhiri dengan aturan:
+          <i>"Langsung mulai dengan TEMUAN, jangan ada kata pengantar atau pengulangan prompt."</i>
+          Ini memastikan konsistensi output di semua anggota tim SOC Anda.</span>
         </div>
       </div>
     </html>
