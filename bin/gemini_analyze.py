@@ -91,6 +91,27 @@ class GeminiAnalyzeCommand(StreamingCommand):
                 text = rest[end:].strip()
                 break
 
+        # Layer 5: Strip AI's internal "Chain of Thought" or drafting notes
+        # (This removes lines at the beginning that start with *, Rule, (Self-Correction, etc.)
+        cleaned_final = []
+        in_thought_process = True
+        for line in text.splitlines():
+            l_strip = line.strip()
+            if in_thought_process:
+                if (l_strip.startswith('*') or 
+                    l_strip.startswith('Rule ') or 
+                    l_strip.startswith('(Self-') or
+                    l_strip.lower().startswith('role:') or
+                    l_strip.lower().startswith('task:')):
+                    continue
+                elif l_strip == "":
+                    continue
+                else:
+                    in_thought_process = False
+            cleaned_final.append(line)
+        
+        text = "\n".join(cleaned_final)
+
         return text.strip()
 
     def call_gemini_api(self, text_payload, system_instruction, role_name):
@@ -137,7 +158,7 @@ class GeminiAnalyzeCommand(StreamingCommand):
             headers={'Content-Type': 'application/json'}
         )
 
-        max_retries = 3
+        max_retries = 5
         backoff_factor = 2
 
         for attempt in range(max_retries + 1):
@@ -150,12 +171,12 @@ class GeminiAnalyzeCommand(StreamingCommand):
             except urllib.error.HTTPError as e:
                 # Retry on rate limit or internal server errors
                 if e.code in [429, 500, 502, 503, 504] and attempt < max_retries:
-                    time.sleep(backoff_factor ** attempt)
+                    time.sleep(2 * (backoff_factor ** attempt)) # 2s, 4s, 8s, 16s, 32s
                     continue
                 return f"[API Error {e.code}]: {e.read().decode('utf-8')}", user_turn
             except Exception as e:
                 if attempt < max_retries:
-                    time.sleep(backoff_factor ** attempt)
+                    time.sleep(2 * (backoff_factor ** attempt))
                     continue
                 return f"[System Error]: {str(e)}", user_turn
 
