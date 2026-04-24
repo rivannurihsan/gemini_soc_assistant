@@ -189,7 +189,7 @@ require([
         }
 
         // Coba create dulu
-        service.post("admin/gemini_setup/gemini_api_setup/_new", payload, function(err, resp) {
+        service.post("admin/gemini_setup/gemini_api_setup", payload, function(err, resp) {
             if (err && err.status === 409) {
                 // Jika sudah ada, update
                 service.post("admin/gemini_setup/gemini_api_setup/gemini_config", payload, function(err2, resp2) {

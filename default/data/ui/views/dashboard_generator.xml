@@ -106,7 +106,7 @@
             
             var q = '| makeresults \n| eval _raw="" \n| geminianalyze prompt=' + JSON.stringify(prompt) + ' role=' + JSON.stringify(formatRole) + ' model="gemini-3.1-pro" \n| table gemini_analysis';
             
-            window.location.href = window.location.origin + '/en-US/app/gemini_soc_assistant/search?q=' + encodeURIComponent(q) + '&earliest=-1m&latest=now';
+            window.location.href = window.location.origin + '/en-US/app/gemini_soc_assistant/search?q=' + encodeURIComponent(q) + '&amp;earliest=-1m&amp;latest=now';
           }
         </script>
       </html>
