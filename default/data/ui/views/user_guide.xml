@@ -1,15 +1,24 @@
-<dashboard version="1.1" theme="light">
-  <label>📖 Panduan Utama &amp; Dokumentasi Teknis V2.1</label>
-  <description>Dokumentasi lengkap penggunaan perintah '| geminianalyze' untuk investigasi keamanan berbasis AI.</description>
-  
+<dashboard version="1.1" theme="dark">
+  <label>📖 Panduan Gemini SOC Assistant V2.0</label>
+  <description>Dokumentasi lengkap perintah | geminianalyze — analisis log berbasis AI untuk tim SOC.</description>
+
   <row>
     <panel>
       <html>
-        <div style="background: linear-gradient(90deg, #004d66 0%, #006d9c 100%); color: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-          <h1 style="color: white; margin-top: 0;">Gemini SOC Assistant: Panduan Ahli 🛡️</h1>
-          <p style="font-size: 1.1em; line-height: 1.6;">
-            Aplikasi ini mentransformasi cara Anda berinteraksi dengan data log. Dengan memanfaatkan model <b>Gemma 4</b> dan <b>Gemini 3.1</b>, analis kini dapat melakukan interpretasi log yang kompleks, pemetaan taktik serangan, dan rekomendasi mitigasi secara instan langsung di Search Head Splunk.
+        <div style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;padding:28px 32px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.4);">
+          <h1 style="margin:0 0 8px 0;font-size:1.8em;">🛡️ Gemini SOC Assistant — V2.0</h1>
+          <p style="margin:0;font-size:1.05em;line-height:1.7;color:#b0d4e8;">
+            Asisten AI untuk tim SOC berbasis Splunk. Didukung oleh <b>Gemma 4</b> dan <b>Gemini</b>,
+            dirancang untuk menghasilkan analisis log yang <b>detail, komprehensif, dan langsung actionable</b>
+            — tanpa noise, tanpa basa-basi, tanpa mengulang prompt.
           </p>
+          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+            <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:20px;font-size:0.85em;">✅ Anti-Echo Output</span>
+            <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:20px;font-size:0.85em;">✅ Native System Instruction</span>
+            <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:20px;font-size:0.85em;">✅ 5 Role Bawaan</span>
+            <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:20px;font-size:0.85em;">✅ MITRE ATT&amp;CK Mapping</span>
+            <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:20px;font-size:0.85em;">✅ Batch Mode</span>
+          </div>
         </div>
       </html>
     </panel>
@@ -17,90 +26,167 @@
 
   <row>
     <panel>
-      <title>📋 1. Penjelasan Fungsi &amp; Parameter</title>
+      <title>🆕 Yang Berubah di V2</title>
       <html>
-        <p>Perintah <code>| geminianalyze</code> menerima beberapa parameter untuk mengontrol perilaku AI. Berikut adalah detail teknisnya:</p>
-        <table style="width:100%; border-collapse: collapse; margin-top: 10px; font-family: sans-serif;">
-          <tr style="background-color: #006d9c; color: white;">
-            <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Parameter</th>
-            <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Tipe Data</th>
-            <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Deskripsi &amp; Kegunaan</th>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div style="padding:16px;border-left:4px solid #00b4d8;background:#1a2a35;border-radius:6px;">
+            <h4 style="color:#00b4d8;margin:0 0 8px 0;">🧠 Prompt Engine Baru</h4>
+            <p style="color:#ccc;margin:0;font-size:0.92em;">Menggunakan <code>system_instruction</code> field native Gemini API sehingga aturan AI benar-benar terpisah dari data pengguna. Hasilnya: AI lebih patuh dan output jauh lebih bersih.</p>
+          </div>
+          <div style="padding:16px;border-left:4px solid #06d6a0;background:#1a2a35;border-radius:6px;">
+            <h4 style="color:#06d6a0;margin:0 0 8px 0;">🚫 Anti-Echo &amp; Anti-Noise</h4>
+            <p style="color:#ccc;margin:0;font-size:0.92em;">Output cleaner pipeline berlapis: buang tag bocor, buang echo prompt, buang kata pengantar. AI langsung mulai dengan TEMUAN, bukan "Berikut adalah analisis saya...".</p>
+          </div>
+          <div style="padding:16px;border-left:4px solid #ffd166;background:#1a2a35;border-radius:6px;">
+            <h4 style="color:#ffd166;margin:0 0 8px 0;">📏 Analisis Lebih Panjang</h4>
+            <p style="color:#ccc;margin:0;font-size:0.92em;"><code>maxOutputTokens: 4096</code> — analisis tidak akan terpotong di tengah. Temperature 0.4 membuat output lebih ekspansif dan kaya detail tanpa kehilangan akurasi.</p>
+          </div>
+          <div style="padding:16px;border-left:4px solid #ef476f;background:#1a2a35;border-radius:6px;">
+            <h4 style="color:#ef476f;margin:0 0 8px 0;">🎭 5 Role Specialist Baru</h4>
+            <p style="color:#ccc;margin:0;font-size:0.92em;">Ditambahkan role <code>threat_hunter</code>, <code>malware_analyst</code>, dan <code>executive_report</code> dengan template output Markdown terstruktur + MITRE ATT&amp;CK mapping.</p>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>📋 Parameter Perintah | geminianalyze</title>
+      <html>
+        <table style="width:100%;border-collapse:collapse;font-family:sans-serif;">
+          <tr style="background:#006d9c;color:#fff;">
+            <th style="padding:11px 14px;border:1px solid #444;text-align:left;">Parameter</th>
+            <th style="padding:11px 14px;border:1px solid #444;text-align:left;">Wajib?</th>
+            <th style="padding:11px 14px;border:1px solid #444;text-align:left;">Default</th>
+            <th style="padding:11px 14px;border:1px solid #444;text-align:left;">Keterangan</th>
           </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><b>prompt</b></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">String</td>
-            <td style="padding: 10px; border: 1px solid #ddd;"><b>Wajib.</b> Instruksi tugas untuk AI (misal: "Cari pola anomali").</td>
+          <tr style="background:#1e2b33;">
+            <td style="padding:10px 14px;border:1px solid #444;color:#7ec8e3;"><b>prompt</b></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#06d6a0;">✅ Ya</td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;">—</td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#ddd;">Instruksi tugas untuk AI. Tulis senatural mungkin. Contoh: <code>"Identifikasi teknik brute force dan rekomendasikan mitigasi."</code></td>
           </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><b>role</b></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">String</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">Memanggil instruksi sistem yang sudah dibuat di menu Setup (default: <code>soc_analyst_id</code>).</td>
+          <tr style="background:#16212a;">
+            <td style="padding:10px 14px;border:1px solid #444;color:#7ec8e3;"><b>role</b></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;">❌ Tidak</td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;"><code>soc_clean_report</code></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#ddd;">Persona AI. Pilih: <code>soc_clean_report</code> | <code>threat_hunter</code> | <code>malware_analyst</code> | <code>executive_report</code> | <code>json_extractor</code></td>
           </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><b>batch</b></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">Boolean</td>
-            <td style="padding: 10px; border: 1px solid #ddd;"><code>false</code> (Default): Analisis satu per satu. <code>true</code>: Menggabungkan semua hasil pencarian menjadi 1 analisis besar.</td>
+          <tr style="background:#1e2b33;">
+            <td style="padding:10px 14px;border:1px solid #444;color:#7ec8e3;"><b>batch</b></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;">❌ Tidak</td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;"><code>false</code></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#ddd;"><code>false</code> = analisis per baris log (baik untuk investigasi detail). <code>true</code> = semua log digabung jadi 1 analisis besar (baik untuk rangkuman insiden).</td>
           </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><b>field</b></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">String</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">Field data yang dikirim ke AI. Jika field tidak ditemukan, aplikasi otomatis mengambil seluruh baris sebagai JSON.</td>
+          <tr style="background:#16212a;">
+            <td style="padding:10px 14px;border:1px solid #444;color:#7ec8e3;"><b>field</b></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;">❌ Tidak</td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;"><code>_raw</code></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#ddd;">Field yang dikirim ke AI. Jika field tidak ada, otomatis mengambil seluruh record sebagai JSON.</td>
           </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><b>model</b></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">String</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">Override model secara instan (misal: <code>gemini-1.5-pro</code>).</td>
+          <tr style="background:#1e2b33;">
+            <td style="padding:10px 14px;border:1px solid #444;color:#7ec8e3;"><b>model</b></td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;">❌ Tidak</td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#aaa;">(dari Setup)</td>
+            <td style="padding:10px 14px;border:1px solid #444;color:#ddd;">Override model on-the-fly. Contoh: <code>model="gemini-3.1-pro"</code>. Berguna untuk investigasi berat yang butuh model Pro.</td>
           </tr>
         </table>
+        <p style="color:#aaa;margin-top:10px;font-size:0.9em;">💡 <b>Field output baru di V2:</b> <code>gemini_analysis</code>, <code>gemini_analysis_length</code>, <code>gemini_task_sent</code>, <code>analysis_mode</code>, <code>ai_model</code>, <code>ai_role</code>, <code>record_count</code> (batch only)</p>
       </html>
     </panel>
   </row>
 
   <row>
     <panel>
-      <title>🧪 2. Pustaka Test Case (Skenario Operasional)</title>
+      <title>🎭 Katalog Role Bawaan</title>
       <html>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          
-          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
-            <h4 style="color: #006d9c; margin-top:0;">Skenario 1: Investigasi Brute Force (Single Mode)</h4>
-            <p style="font-size: 0.9em;">Gunakan untuk membedah satu log gagal login secara mendalam.</p>
-            <pre style="background: #222; color: #fff; padding: 10px; border-radius: 4px;">| makeresults 
-| eval _raw="EventID=4625 User=administrator Source_IP=192.168.1.10"
-| geminianalyze prompt="Analisis kemungkinan teknik brute force pada log ini."</pre>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#00b4d8;margin:0 0 6px 0;"><code>soc_clean_report</code> (Default)</h4>
+            <p style="color:#ccc;margin:0 0 6px 0;font-size:0.9em;">Laporan insiden terstruktur: Detail Teknis, Penilaian Ancaman, Rekomendasi. Terbaik untuk investigasi harian SOC.</p>
+            <code style="color:#aaa;font-size:0.8em;">role="soc_clean_report"</code>
+          </div>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#ef476f;margin:0 0 6px 0;"><code>threat_hunter</code></h4>
+            <p style="color:#ccc;margin:0 0 6px 0;font-size:0.9em;">IOC table, MITRE ATT&amp;CK mapping, kill chain reconstruction, dan query hunting lanjutan.</p>
+            <code style="color:#aaa;font-size:0.8em;">role="threat_hunter"</code>
+          </div>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#ffd166;margin:0 0 6px 0;"><code>malware_analyst</code></h4>
+            <p style="color:#ccc;margin:0 0 6px 0;font-size:0.9em;">Klasifikasi malware, kapabilitas teknis (C2, persistence, evasion), skor risiko, dan rule deteksi.</p>
+            <code style="color:#aaa;font-size:0.8em;">role="malware_analyst"</code>
+          </div>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#06d6a0;margin:0 0 6px 0;"><code>executive_report</code></h4>
+            <p style="color:#ccc;margin:0 0 6px 0;font-size:0.9em;">Laporan level CISO/Direksi: non-teknis, fokus dampak bisnis, risiko regulasi (UU PDP), rekomendasi strategis.</p>
+            <code style="color:#aaa;font-size:0.8em;">role="executive_report"</code>
+          </div>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#c77dff;margin:0 0 6px 0;"><code>json_extractor</code></h4>
+            <p style="color:#ccc;margin:0 0 6px 0;font-size:0.9em;">Output STRICT JSON only — untuk integrasi SOAR, enrichment pipeline, atau automation. Tidak ada teks Markdown.</p>
+            <code style="color:#aaa;font-size:0.8em;">role="json_extractor"</code>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>🧪 Contoh Query Siap Pakai</title>
+      <html>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#00b4d8;margin:0 0 6px 0;">1. Investigasi Brute Force (Single)</h4>
+            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Analisis mendalam per baris log gagal login.</p>
+            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=wineventlog EventCode=4625
+| head 10
+| geminianalyze prompt="Identifikasi apakah ini brute force, password spray, atau credential stuffing. Sertakan teknik MITRE ATT&amp;CK yang relevan."</pre>
           </div>
 
-          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
-            <h4 style="color: #006d9c; margin-top:0;">Skenario 2: Ringkasan Insiden Massal (Batch Mode)</h4>
-            <p style="font-size: 0.9em;">Gunakan untuk merangkum ratusan log menjadi satu kesimpulan tunggal.</p>
-            <pre style="background: #222; color: #fff; padding: 10px; border-radius: 4px;">| index=firewall | head 50
-| geminianalyze prompt="Apakah ada pola serangan yang sama dari kumpulan log ini?" batch=true</pre>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#ef476f;margin:0 0 6px 0;">2. Ringkasan Insiden Massal (Batch)</h4>
+            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Gabungkan ratusan log menjadi satu analisis komprehensif.</p>
+            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=firewall action=blocked
+| head 100
+| geminianalyze prompt="Identifikasi pola serangan, IP paling agresif, dan port yang paling ditarget." batch=true role="threat_hunter"</pre>
           </div>
 
-          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
-            <h4 style="color: #006d9c; margin-top:0;">Skenario 3: Analisis Tabel Hasil Stats (Auto-JSON)</h4>
-            <p style="font-size: 0.9em;">AI otomatis memahami data tabel meskipun field _raw tidak tersedia.</p>
-            <pre style="background: #222; color: #fff; padding: 10px; border-radius: 4px;">| stats count by src_ip, dest_port
-| geminianalyze prompt="Analisis IP mana yang paling berbahaya berdasarkan trafik ini."</pre>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#ffd166;margin:0 0 6px 0;">3. Analisis Tabel Stats (Auto-JSON)</h4>
+            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">AI membaca data tabel agregat meskipun tidak ada _raw.</p>
+            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=main
+| stats count by src_ip, dest_port, action
+| sort -count
+| head 20
+| geminianalyze prompt="Analisis IP mana yang paling berbahaya dan apakah ada indikasi port scanning atau C2 communication."</pre>
           </div>
 
-          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
-            <h4 style="color: #006d9c; margin-top:0;">Skenario 4: Laporan Eksekutif (Custom Role)</h4>
-            <p style="font-size: 0.9em;">Meminta AI menggunakan format bahasa formal untuk laporan manajemen.</p>
-            <pre style="background: #222; color: #fff; padding: 10px; border-radius: 4px;">| index=main tag=incident | head 1
-| geminianalyze prompt="Buatkan ringkasan insiden untuk level direksi." role="report_writer"</pre>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#06d6a0;margin:0 0 6px 0;">4. Laporan Eksekutif</h4>
+            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Laporan non-teknis siap untuk manajemen/CISO.</p>
+            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=main tag=incident
+| head 1
+| geminianalyze prompt="Buatkan laporan insiden untuk Dewan Direksi." role="executive_report"</pre>
           </div>
 
-          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
-            <h4 style="color: #006d9c; margin-top:0;">Skenario 5: Deep Forensics (Override Model)</h4>
-            <p style="font-size: 0.9em;">Gunakan model 'Pro' untuk logika penalaran yang paling berat.</p>
-            <pre style="background: #222; color: #fff; padding: 10px; border-radius: 4px;">| geminianalyze prompt="Lakukan bedah forensik payload ini." model="gemini-1.5-pro"</pre>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#c77dff;margin:0 0 6px 0;">5. Ekstraksi IOC untuk SOAR</h4>
+            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Output JSON murni siap dikonsumsi oleh automation pipeline.</p>
+            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=proxy
+| head 20
+| geminianalyze prompt="Ekstrak semua IOC dari log ini." role="json_extractor"
+| table _time, gemini_analysis</pre>
           </div>
 
-          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
-            <h4 style="color: #006d9c; margin-top:0;">Skenario 6: Audit &amp; Transparansi (Prompt Audit)</h4>
-            <p style="font-size: 0.9em;">Melihat teks asli yang dikirim ke AI untuk keperluan verifikasi.</p>
-            <pre style="background: #222; color: #fff; padding: 10px; border-radius: 4px;">| geminianalyze prompt="..." | table gemini_analysis, gemini_prompt</pre>
+          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
+            <h4 style="color:#ff9f43;margin:0 0 6px 0;">6. Deep Forensics (Override Model Pro)</h4>
+            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Gunakan model paling canggih untuk kasus kompleks.</p>
+            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">| makeresults
+| eval _raw="[payload berbahaya Anda di sini]"
+| geminianalyze prompt="Lakukan bedah forensik menyeluruh pada payload ini." role="malware_analyst" model="gemini-3.1-pro"</pre>
           </div>
 
         </div>
@@ -110,20 +196,42 @@
 
   <row>
     <panel>
-      <title>⚙️ 3. Alur Kerja &amp; Cara Penggunaan</title>
+      <title>⚙️ Alur Kerja Optimal V2</title>
       <html>
-        <div style="line-height: 1.6;">
-          <ol>
-            <li><b>Input Data:</b> Mulailah dengan kueri pencarian Splunk standar untuk mengambil data.</li>
-            <li><b>Filter &amp; Agregasi:</b> (Opsional) Gunakan <code>stats</code> atau <code>table</code> untuk merapikan data.</li>
-            <li><b>AI Analysis:</b> Tambahkan pipa <code>| geminianalyze</code> dengan prompt instruksi Anda.</li>
-            <li><b>Visualisasi:</b> Tampilkan hasil pada kolom <code>gemini_analysis</code> di dashboard atau laporan Splunk.</li>
-          </ol>
-          <p style="background: #fff3cd; padding: 10px; border-left: 5px solid #ffc107;">
-            <b>Tips Ahli:</b> Gunakan parameter <code>role</code> untuk menjaga konsistensi format output (seperti Markdown atau JSON) di seluruh tim SOC Anda.
-          </p>
+        <div style="display:flex;gap:0;align-items:stretch;flex-wrap:wrap;">
+          <div style="flex:1;min-width:160px;padding:18px;background:#0f2c1e;border-left:4px solid #06d6a0;margin:4px;">
+            <div style="font-size:1.8em;margin-bottom:6px;">①</div>
+            <b style="color:#06d6a0;">Ambil Data</b>
+            <p style="color:#aaa;font-size:0.88em;margin:8px 0 0 0;">Gunakan SPL standar. Semakin spesifik filter Anda, semakin relevan analisis AI.</p>
+          </div>
+          <div style="flex:1;min-width:160px;padding:18px;background:#0f1f2c;border-left:4px solid #00b4d8;margin:4px;">
+            <div style="font-size:1.8em;margin-bottom:6px;">②</div>
+            <b style="color:#00b4d8;">Pilih Mode</b>
+            <p style="color:#aaa;font-size:0.88em;margin:8px 0 0 0;">Per-baris (<code>batch=false</code>) untuk investigasi individual. Batch (<code>batch=true</code>) untuk rangkuman.</p>
+          </div>
+          <div style="flex:1;min-width:160px;padding:18px;background:#1f1a2e;border-left:4px solid #c77dff;margin:4px;">
+            <div style="font-size:1.8em;margin-bottom:6px;">③</div>
+            <b style="color:#c77dff;">Pilih Role</b>
+            <p style="color:#aaa;font-size:0.88em;margin:8px 0 0 0;">Sesuaikan role dengan audiens: SOC analyst, threat hunter, atau eksekutif.</p>
+          </div>
+          <div style="flex:1;min-width:160px;padding:18px;background:#2c1f0f;border-left:4px solid #ffd166;margin:4px;">
+            <div style="font-size:1.8em;margin-bottom:6px;">④</div>
+            <b style="color:#ffd166;">Tulis Prompt</b>
+            <p style="color:#aaa;font-size:0.88em;margin:8px 0 0 0;">Tulis pertanyaan investigasi Anda. Semakin spesifik prompt, semakin dalam analisis AI.</p>
+          </div>
+          <div style="flex:1;min-width:160px;padding:18px;background:#2c0f14;border-left:4px solid #ef476f;margin:4px;">
+            <div style="font-size:1.8em;margin-bottom:6px;">⑤</div>
+            <b style="color:#ef476f;">Tampilkan Hasil</b>
+            <p style="color:#aaa;font-size:0.88em;margin:8px 0 0 0;">Gunakan <code>| table gemini_analysis</code> atau masukkan ke dashboard laporan SOC Anda.</p>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:14px;background:#1a2a1a;border-left:5px solid #06d6a0;border-radius:4px;">
+          <b style="color:#06d6a0;">💡 Tips Ahli V2:</b>
+          <span style="color:#ccc;"> Untuk monitoring kualitas, tambahkan <code>| table gemini_analysis, gemini_analysis_length, ai_model, ai_role</code>.
+          Field <code>gemini_analysis_length</code> membantu Anda memantau apakah AI memberikan output yang cukup detail (idealnya &gt; 500 karakter per analisis).</span>
         </div>
       </html>
     </panel>
   </row>
+
 </dashboard>
