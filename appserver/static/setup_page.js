@@ -168,7 +168,7 @@ require([
         });
     });
 
-    // 5. Simpan Konfigurasi Utama via Backend Python (SHC Safe)
+    // 5. Simpan Konfigurasi Utama (Upsert Mode)
     $('#save_btn').on('click', function() {
         var key = $('#api_key_input').val();
         var selectedDropdownModel = $('#model_select').val();
@@ -177,35 +177,58 @@ require([
 
         if (!finalModel) return alert("Silakan pilih atau ketik nama model AI Anda!");
 
-        $('#status_msg').css("color", "blue").text("Menyimpan konfigurasi ke server (SHC safe)...");
+        $('#status_msg').css("color", "blue").text("Menyimpan konfigurasi...");
 
-        var payload = { 
-            name: "gemini_config", 
-            model_name: finalModel, 
-            default_role: finalRole 
-        };
-        if (key && key !== "********" && key.trim() !== "") {
-            payload.api_key = key;
+        var confPayload = { model_name: finalModel, default_role: finalRole };
+
+        // Fungsi Helper untuk Upsert Config
+        function upsertConfig(cb) {
+            service.post("configs/conf-gemini_settings/gemini_config", confPayload, function(err, resp) {
+                if (err && err.status === 404) {
+                    confPayload.name = "gemini_config";
+                    service.post("configs/conf-gemini_settings", confPayload, function(cerr, cresp) {
+                        cb(cerr);
+                    });
+                } else {
+                    cb(err);
+                }
+            });
         }
 
-        // Coba create dulu
-        service.post("admin/gemini_setup/gemini_api_setup", payload, function(err, resp) {
-            if (err && err.status === 409) {
-                // Jika sudah ada, update
-                service.post("admin/gemini_setup/gemini_api_setup/gemini_config", payload, function(err2, resp2) {
-                    if (err2) {
-                        var msg = err2.error || err2.status || "Unknown Error";
-                        $('#status_msg').css("color", "red").text("Gagal update konfigurasi: " + msg);
+        // Fungsi Helper untuk Upsert API Key
+        function upsertApiKey(cb) {
+            if (key && key !== "********" && key.trim() !== "") {
+                service.post("storage/passwords", { name: "gemini_api_user", password: key, realm: "gemini_soc_assistant_realm" }, function(perr, presp) {
+                    if (perr && perr.status === 409) {
+                        service.post("storage/passwords/gemini_soc_assistant_realm%3Agemini_api_user", { password: key }, function(uerr, uresp) {
+                            cb(uerr);
+                        });
                     } else {
-                        done();
+                        cb(perr);
                     }
                 });
-            } else if (err) {
-                var msg = err.error || err.status || "Unknown Error";
-                $('#status_msg').css("color", "red").text("Gagal menyimpan konfigurasi: " + msg);
             } else {
-                done();
+                cb(null); // Tidak ada perubahan key
             }
+        }
+
+        // Eksekusi Berantai
+        upsertConfig(function(errConf) {
+            if (errConf) {
+                var msg = errConf.error || errConf.status || "Unknown Error";
+                $('#status_msg').css("color", "red").text("Gagal menyimpan pengaturan model/role: " + msg);
+                return;
+            }
+            
+            upsertApiKey(function(errKey) {
+                if (errKey) {
+                    var msg = errKey.error || errKey.status || "Unknown Error";
+                    $('#status_msg').css("color", "red").text("Gagal menyimpan API Key: " + msg);
+                    return;
+                }
+                
+                done();
+            });
         });
     });
 
