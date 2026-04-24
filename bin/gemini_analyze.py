@@ -10,6 +10,7 @@
 import sys
 import json
 import re
+import time
 import urllib.request
 import urllib.parse
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option, validators
@@ -104,17 +105,16 @@ class GeminiAnalyzeCommand(StreamingCommand):
             f"{system_instruction}\n\n"
             "═══ MANDATORY OUTPUT RULES ═══\n"
             "RULE 1: Start your response IMMEDIATELY. Do NOT write any intro sentence or greeting.\n"
-            "RULE 2: NEVER repeat, paraphrase, or echo the user's TASK or question.\n"
-            "RULE 3: NEVER write sentences like 'Based on the log...', 'Here is the analysis...', "
-            "'Berikut analisis...', 'Berdasarkan data...', or similar filler openers.\n"
-            "RULE 4: NEVER include the raw data back in your output verbatim.\n"
-            "RULE 5: Format your output strictly according to the instructions (Markdown, JSON, or XML). "
-            "Do not add conversational text outside of the requested format.\n\n"
+            "RULE 2: NEVER repeat, paraphrase, or echo the user's TASK, rules, constraints, or your own system instructions.\n"
+            "RULE 3: NEVER write your internal thought process, task analysis, or constraints into the output.\n"
+            "RULE 4: NEVER write sentences like 'Based on the log...', 'Here is the analysis...', or similar filler openers.\n"
+            "RULE 5: NEVER include the raw data back in your output verbatim.\n"
+            "RULE 6: OUTPUT FORMAT: If the task requires human-readable text, output PURE PLAINTEXT. DO NOT use Markdown symbols like asterisks (*), hashtags (#), or backticks (`). Use standard numbers (1. 2. 3.) for lists. Do NOT use markdown because it breaks the UI. If JSON or XML is specifically requested, output pure JSON/XML without Markdown blocks.\n\n"
             "── FEW-SHOT ANTI-PATTERN EXAMPLES (DO NOT DO THESE) ──\n"
+            "❌ BAD: '* Role: SOC Analyst. * Task: Analyze logs...'\n"
             "❌ BAD: 'Berikut adalah analisis log EventID=4625 yang Anda kirimkan:'\n"
             "❌ BAD: 'Anda meminta saya untuk mengidentifikasi brute force...'\n"
-            "❌ BAD: 'Based on the provided data, here is my analysis:'\n"
-            "✅ GOOD: Start directly with the actual formatted response (e.g., Markdown headers, JSON brackets, or XML tags)."
+            "✅ GOOD: Start directly with the final analytical findings in clean plaintext."
         )
 
         # ── User Turn ───────────────────────────────────────────────────────
@@ -137,16 +137,27 @@ class GeminiAnalyzeCommand(StreamingCommand):
             headers={'Content-Type': 'application/json'}
         )
 
-        try:
-            with urllib.request.urlopen(req, timeout=90) as resp:
-                res_data   = json.loads(resp.read().decode('utf-8'))
-                raw_text   = res_data['candidates'][0]['content']['parts'][0]['text']
-                clean_text = self.clean_output(raw_text, self.prompt)
-                return clean_text, user_turn
-        except urllib.error.HTTPError as e:
-            return f"[API Error {e.code}]: {e.read().decode('utf-8')}", user_turn
-        except Exception as e:
-            return f"[System Error]: {str(e)}", user_turn
+        max_retries = 3
+        backoff_factor = 2
+
+        for attempt in range(max_retries + 1):
+            try:
+                with urllib.request.urlopen(req, timeout=90) as resp:
+                    res_data   = json.loads(resp.read().decode('utf-8'))
+                    raw_text   = res_data['candidates'][0]['content']['parts'][0]['text']
+                    clean_text = self.clean_output(raw_text, self.prompt)
+                    return clean_text, user_turn
+            except urllib.error.HTTPError as e:
+                # Retry on rate limit or internal server errors
+                if e.code in [429, 500, 502, 503, 504] and attempt < max_retries:
+                    time.sleep(backoff_factor ** attempt)
+                    continue
+                return f"[API Error {e.code}]: {e.read().decode('utf-8')}", user_turn
+            except Exception as e:
+                if attempt < max_retries:
+                    time.sleep(backoff_factor ** attempt)
+                    continue
+                return f"[System Error]: {str(e)}", user_turn
 
     def prepare(self):
         service           = client.connect(token=self._metadata.searchinfo.session_key)
