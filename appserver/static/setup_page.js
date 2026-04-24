@@ -45,6 +45,7 @@ require([
                 }
             }
             loadRoles(roleToSet);
+            loadRolesForManagement();
         });
     }
 
@@ -78,6 +79,64 @@ require([
         });
     }
 
+    function loadRolesForManagement() {
+        service.get("configs/conf-gemini_settings", {}, function(err, resp) {
+            var tbody = $('#role_management_table tbody');
+            tbody.empty();
+            if (resp && resp.data && resp.data.entry) {
+                resp.data.entry.forEach(function(e) {
+                    if (e.name.startsWith("role:")) {
+                        var rName = e.name.split(":")[1];
+                        var instructions = e.content.instructions || "";
+                        var snippet = instructions.length > 90 ? instructions.substring(0, 90) + "..." : instructions;
+                        
+                        var tr = $('<tr>').css('border-bottom', '1px solid #2a4a5a');
+                        tr.append($('<td>').css({'padding':'12px','color':'#7ec8e3'}).text(rName));
+                        tr.append($('<td>').css('padding','12px').text(snippet));
+                        
+                        var actionTd = $('<td>').css('padding','12px');
+                        var editBtn = $('<button>').text('✏️ Edit').css({'padding':'4px 8px','margin-right':'8px','background':'#2c5364','color':'#fff','border':'none','border-radius':'3px','cursor':'pointer'})
+                            .on('click', function(evt) {
+                                evt.preventDefault();
+                                $('#form_title').text('✏️ Edit Role: ' + rName);
+                                $('#new_role_name').val(rName).prop('readonly', true).css('opacity', '0.6');
+                                $('#role_instructions').val(instructions);
+                            });
+                            
+                        var delBtn = $('<button>').text('🗑️ Hapus').css({'padding':'4px 8px','background':'#ef476f','color':'#fff','border':'none','border-radius':'3px','cursor':'pointer'})
+                            .on('click', function(evt) {
+                                evt.preventDefault();
+                                if(confirm("Yakin ingin menghapus role '" + rName + "'?")) {
+                                    service.del("configs/conf-gemini_settings/" + e.name, {}, function(errDel) {
+                                        if(!errDel) {
+                                            $('#status_msg').css("color", "green").text("Role " + rName + " dihapus!");
+                                            loadRolesForManagement();
+                                            loadRoles(); // refresh dropdown
+                                            setTimeout(function() { $('#status_msg').text(""); }, 3000);
+                                        } else {
+                                            alert("Gagal menghapus: " + errDel.status);
+                                        }
+                                    });
+                                }
+                            });
+                        
+                        actionTd.append(editBtn).append(delBtn);
+                        tr.append(actionTd);
+                        tbody.append(tr);
+                    }
+                });
+            }
+        });
+    }
+
+    function resetFormAndReload(rName) {
+        $('#new_role_name').val('').prop('readonly', false).css('opacity', '1');
+        $('#role_instructions').val('');
+        $('#form_title').text('➕ Buat / Edit Role');
+        loadRoles(rName);
+        loadRolesForManagement();
+    }
+
     // 4. Tambah/Update Role (Tahan terhadap Error 409)
     $('#add_role_btn').on('click', function() {
         var rName = $('#new_role_name').val().trim().toLowerCase().replace(/\s+/g, '_');
@@ -94,14 +153,14 @@ require([
                 service.post("configs/conf-gemini_settings/" + roleStanza, { instructions: rInst }, function(err2, r2) {
                     if (!err2) {
                         $('#status_msg').css("color", "green").text("Role berhasil diperbarui!");
-                        loadRoles(rName);
+                        resetFormAndReload(rName);
                     } else {
                         $('#status_msg').css("color", "red").text("Gagal memperbarui role: " + err2.status);
                     }
                 });
             } else if (!err) {
                 $('#status_msg').css("color", "green").text("Role baru berhasil disimpan!");
-                loadRoles(rName);
+                resetFormAndReload(rName);
             } else {
                 $('#status_msg').css("color", "red").text("Gagal menyimpan role: " + err.status);
             }
@@ -109,7 +168,7 @@ require([
         });
     });
 
-    // 5. Simpan Konfigurasi Utama (Tahan terhadap Error 404)
+    // 5. Simpan Konfigurasi Utama via Backend Python (SHC Safe)
     $('#save_btn').on('click', function() {
         var key = $('#api_key_input').val();
         var selectedDropdownModel = $('#model_select').val();
@@ -118,45 +177,34 @@ require([
 
         if (!finalModel) return alert("Silakan pilih atau ketik nama model AI Anda!");
 
-        $('#status_msg').css("color", "blue").text("Menyimpan konfigurasi ke server...");
+        $('#status_msg').css("color", "blue").text("Menyimpan konfigurasi ke server (SHC safe)...");
 
-        var payload = { model_name: finalModel, default_role: finalRole };
-
-        // Fungsi lanjutan untuk menyimpan API Key
-        function saveApiKeyAndFinish() {
-            if (key && key !== "********" && key.trim() !== "") {
-                var credId = encodeURIComponent(REALM + ":" + USER + ":");
-                service.del("storage/passwords/" + credId, {}, function() {
-                    service.post("storage/passwords", { name: USER, password: key, realm: REALM }, function(errKey, respKey) {
-                        if (errKey) {
-                            $('#status_msg').css("color", "red").text("Konfigurasi tersimpan, tapi gagal menyimpan API Key.");
-                        } else {
-                            done();
-                        }
-                    });
-                });
-            } else { 
-                done(); 
-            }
+        var payload = { 
+            name: "gemini_config", 
+            model_name: finalModel, 
+            default_role: finalRole 
+        };
+        if (key && key !== "********" && key.trim() !== "") {
+            payload.api_key = key;
         }
 
-        // Coba Update konfigurasi yang ada
-        service.post("configs/conf-gemini_settings/gemini_config", payload, function(err, resp) {
-            if (err && err.status === 404) {
-                // Jika tidak ditemukan (404), paksa Buat Baru
-                payload.name = "gemini_config";
-                service.post("configs/conf-gemini_settings", payload, function(err2, resp2) {
+        // Coba create dulu
+        service.post("admin/gemini_api_setup/_new", payload, function(err, resp) {
+            if (err && err.status === 409) {
+                // Jika sudah ada, update
+                service.post("admin/gemini_api_setup/gemini_config", payload, function(err2, resp2) {
                     if (err2) {
-                        $('#status_msg').css("color", "red").text("Gagal membuat konfigurasi baru. Status " + err2.status);
+                        var msg = err2.error || err2.status || "Unknown Error";
+                        $('#status_msg').css("color", "red").text("Gagal update konfigurasi: " + msg);
                     } else {
-                        saveApiKeyAndFinish();
+                        done();
                     }
                 });
             } else if (err) {
-                $('#status_msg').css("color", "red").text("Gagal menyimpan konfigurasi. Status " + err.status);
+                var msg = err.error || err.status || "Unknown Error";
+                $('#status_msg').css("color", "red").text("Gagal menyimpan konfigurasi: " + msg);
             } else {
-                // Jika update sukses
-                saveApiKeyAndFinish();
+                done();
             }
         });
     });

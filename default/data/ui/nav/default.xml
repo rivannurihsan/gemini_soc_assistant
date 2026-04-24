@@ -1,5 +1,6 @@
 <nav color="#5CC05C">
   <view name="search" default="true" />
+  <view name="gemini_chat_assistant" />
   <view name="user_guide" />
   <view name="setup_page_dashboard" />
 </nav>

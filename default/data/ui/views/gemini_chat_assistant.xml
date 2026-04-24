@@ -1,0 +1,59 @@
+<form version="1.1" theme="dark">
+  <label>💬 Gemini SOC Chat Assistant</label>
+  <description>Dashboard interaktif untuk berkonsultasi langsung dengan AI. Paste log atau payload, pilih persona, dan ajukan pertanyaan tanpa perlu menyusun kueri pencarian Splunk (SPL) yang panjang.</description>
+  
+  <fieldset submitButton="true" autoRun="false">
+    <input type="dropdown" token="model" searchWhenChanged="false">
+      <label>1. Pilih Model AI</label>
+      <choice value="gemma-4-31b-it">Gemma 4 31B IT (Cepat &amp; Akurat)</choice>
+      <choice value="gemini-3.1-pro">Gemini 3.1 Pro (Investigasi Kompleks)</choice>
+      <choice value="gemini-3-flash">Gemini 3 Flash (Ringan)</choice>
+      <default>gemma-4-31b-it</default>
+    </input>
+    
+    <input type="dropdown" token="role" searchWhenChanged="false">
+      <label>2. Pilih Persona / Role AI</label>
+      <choice value="soc_clean_report">SOC Analyst (Laporan Insiden)</choice>
+      <choice value="threat_hunter">Threat Hunter (IOC &amp; MITRE)</choice>
+      <choice value="malware_analyst">Malware Analyst (Bedah Payload)</choice>
+      <choice value="executive_report">Executive Report (Level Direksi)</choice>
+      <choice value="json_extractor">JSON Extractor (Format Data)</choice>
+      <default>soc_clean_report</default>
+    </input>
+    
+    <input type="text" token="raw_data" searchWhenChanged="false">
+      <label>3. Paste Data Mentah (Log, String, atau Payload)</label>
+      <default>EventID=4625 User=administrator Source_IP=192.168.1.10 LogonType=3</default>
+    </input>
+
+    <input type="text" token="prompt" searchWhenChanged="false">
+      <label>4. Instruksi / Pertanyaan Anda</label>
+      <default>Tolong analisa log ini. Apakah ini menandakan serangan brute force? Apa rekomendasi mitigasinya?</default>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>🤖 Hasil Analisis AI</title>
+      <html>
+        <div style="background:#0d1b22;border-left:4px solid #00b4d8;padding:12px;margin-bottom:15px;color:#b0d4e8;">
+          Tekan tombol <b>Submit</b> berwarna hijau di atas untuk memproses permintaan Anda ke AI. Pastikan terkoneksi dengan internet.
+        </div>
+      </html>
+      <table>
+        <search>
+          <query>| makeresults 
+| eval _raw=$raw_data|s$ 
+| geminianalyze prompt=$prompt|s$ role=$role|s$ model=$model|s$ 
+| table gemini_analysis</query>
+          <earliest>-1m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</form>

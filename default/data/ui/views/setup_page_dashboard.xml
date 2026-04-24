@@ -36,14 +36,27 @@
 
         <hr style="margin:28px 0;border-color:#2a4a5a;"/>
 
-        <h2 style="color:#00b4d8;margin-top:0;">🎭 Role Management — Buat Role Kustom</h2>
-        <p style="color:#aaa;font-size:0.9em;line-height:1.6;">
-          Definisikan instruksi sistem AI yang kustom. Tentukan <b>bahasa output, format (Markdown/JSON), tingkat teknis,
-          dan template laporan</b> sesuai kebutuhan tim Anda.
-        </p>
+        <h2 style="color:#00b4d8;margin-top:0;">🎭 Role Management (Edit &amp; Delete)</h2>
+        <p style="color:#aaa;font-size:0.9em;line-height:1.6;">Kelola role yang ada atau buat role kustom baru sesuai kebutuhan tim Anda.</p>
+        
+        <div style="margin-bottom:24px;border:1px solid #2a4a5a;border-radius:6px;overflow:hidden;">
+          <table id="role_management_table" style="width:100%;text-align:left;border-collapse:collapse;color:#ddd;font-size:0.9em;">
+            <thead>
+              <tr style="background:#0d1b22;border-bottom:1px solid #2a4a5a;">
+                <th style="padding:12px;width:25%;">Nama Role</th>
+                <th style="padding:12px;width:55%;">Cuplikan Instruksi Sistem</th>
+                <th style="padding:12px;width:20%;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="3" style="padding:12px;text-align:center;">Memuat roles...</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-        <label style="color:#aaa;font-size:0.9em;">Nama Role Baru:</label><br/>
-        <input type="text" id="new_role_name" placeholder="Nama Role (misal: dfir_indonesia)" style="width:480px;padding:8px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;"/><br/><br/>
+        <h3 style="color:#06d6a0;margin-top:20px;" id="form_title">➕ Buat / Edit Role</h3>
+        <label style="color:#aaa;font-size:0.9em;">Nama Role:</label><br/>
+        <input type="text" id="new_role_name" placeholder="misal: dfir_indonesia" style="width:480px;padding:8px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;"/><br/><br/>
 
         <label style="color:#aaa;font-size:0.9em;">Instruksi Sistem (System Prompt):</label><br/>
         <textarea id="role_instructions" style="width:100%;height:120px;padding:10px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:4px;color:#fff;margin-top:4px;font-family:monospace;" placeholder="Contoh: Anda adalah analis DFIR. Bahasa: Indonesia. Format: Markdown. Aturan: Langsung berikan temuan teknis, sertakan mapping MITRE ATT&amp;CK, dan akhiri dengan rekomendasi containment yang spesifik."></textarea><br/>

@@ -134,60 +134,72 @@
 
   <row>
     <panel>
-      <title>🧪 Contoh Query Siap Pakai</title>
+      <title>🧪 Contoh Query Interaktif (Klik untuk membuka)</title>
       <html>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="background:#1a2332;padding:20px;border-radius:8px;">
 
-          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
-            <h4 style="color:#00b4d8;margin:0 0 6px 0;">1. Investigasi Brute Force (Single)</h4>
-            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Analisis mendalam per baris log gagal login.</p>
-            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=wineventlog EventCode=4625
+          <details style="margin-bottom:12px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;cursor:pointer;">
+            <summary style="padding:14px;font-weight:bold;color:#00b4d8;font-size:1.1em;outline:none;">1. Investigasi Brute Force (Single)</summary>
+            <div style="padding:0 14px 14px 14px;">
+              <p style="color:#aaa;font-size:0.9em;margin:0 0 8px 0;">Analisis mendalam per baris log gagal login.</p>
+              <pre style="background:#000;color:#0f0;padding:12px;border-radius:5px;font-size:0.85em;white-space:pre-wrap;border-left:3px solid #00b4d8;">index=wineventlog EventCode=4625
 | head 10
 | geminianalyze prompt="Identifikasi apakah ini brute force, password spray, atau credential stuffing. Sertakan teknik MITRE ATT&amp;CK yang relevan."</pre>
-          </div>
+            </div>
+          </details>
 
-          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
-            <h4 style="color:#ef476f;margin:0 0 6px 0;">2. Ringkasan Insiden Massal (Batch)</h4>
-            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Gabungkan ratusan log menjadi satu analisis komprehensif.</p>
-            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=firewall action=blocked
+          <details style="margin-bottom:12px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;cursor:pointer;">
+            <summary style="padding:14px;font-weight:bold;color:#ef476f;font-size:1.1em;outline:none;">2. Ringkasan Insiden Massal (Batch Mode)</summary>
+            <div style="padding:0 14px 14px 14px;">
+              <p style="color:#aaa;font-size:0.9em;margin:0 0 8px 0;">Gabungkan ratusan log menjadi satu analisis komprehensif.</p>
+              <pre style="background:#000;color:#0f0;padding:12px;border-radius:5px;font-size:0.85em;white-space:pre-wrap;border-left:3px solid #ef476f;">index=firewall action=blocked
 | head 100
 | geminianalyze prompt="Identifikasi pola serangan, IP paling agresif, dan port yang paling ditarget." batch=true role="threat_hunter"</pre>
-          </div>
+            </div>
+          </details>
 
-          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
-            <h4 style="color:#ffd166;margin:0 0 6px 0;">3. Analisis Tabel Stats (Auto-JSON)</h4>
-            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">AI membaca data tabel agregat meskipun tidak ada _raw.</p>
-            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=main
+          <details style="margin-bottom:12px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;cursor:pointer;">
+            <summary style="padding:14px;font-weight:bold;color:#ffd166;font-size:1.1em;outline:none;">3. Analisis Tabel Stats (Auto-JSON)</summary>
+            <div style="padding:0 14px 14px 14px;">
+              <p style="color:#aaa;font-size:0.9em;margin:0 0 8px 0;">AI membaca data tabel agregat meskipun tidak ada _raw.</p>
+              <pre style="background:#000;color:#0f0;padding:12px;border-radius:5px;font-size:0.85em;white-space:pre-wrap;border-left:3px solid #ffd166;">index=main
 | stats count by src_ip, dest_port, action
 | sort -count
 | head 20
 | geminianalyze prompt="Analisis IP mana yang paling berbahaya dan apakah ada indikasi port scanning atau C2 communication."</pre>
-          </div>
+            </div>
+          </details>
 
-          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
-            <h4 style="color:#06d6a0;margin:0 0 6px 0;">4. Laporan Eksekutif</h4>
-            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Laporan non-teknis siap untuk manajemen/CISO.</p>
-            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=main tag=incident
+          <details style="margin-bottom:12px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;cursor:pointer;">
+            <summary style="padding:14px;font-weight:bold;color:#06d6a0;font-size:1.1em;outline:none;">4. Laporan Eksekutif</summary>
+            <div style="padding:0 14px 14px 14px;">
+              <p style="color:#aaa;font-size:0.9em;margin:0 0 8px 0;">Laporan non-teknis siap untuk manajemen/CISO.</p>
+              <pre style="background:#000;color:#0f0;padding:12px;border-radius:5px;font-size:0.85em;white-space:pre-wrap;border-left:3px solid #06d6a0;">index=main tag=incident
 | head 1
 | geminianalyze prompt="Buatkan laporan insiden untuk Dewan Direksi." role="executive_report"</pre>
-          </div>
+            </div>
+          </details>
 
-          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
-            <h4 style="color:#c77dff;margin:0 0 6px 0;">5. Ekstraksi IOC untuk SOAR</h4>
-            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Output JSON murni siap dikonsumsi oleh automation pipeline.</p>
-            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">index=proxy
+          <details style="margin-bottom:12px;background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;cursor:pointer;">
+            <summary style="padding:14px;font-weight:bold;color:#c77dff;font-size:1.1em;outline:none;">5. Ekstraksi IOC untuk SOAR</summary>
+            <div style="padding:0 14px 14px 14px;">
+              <p style="color:#aaa;font-size:0.9em;margin:0 0 8px 0;">Output JSON murni siap dikonsumsi oleh automation pipeline.</p>
+              <pre style="background:#000;color:#0f0;padding:12px;border-radius:5px;font-size:0.85em;white-space:pre-wrap;border-left:3px solid #c77dff;">index=proxy
 | head 20
 | geminianalyze prompt="Ekstrak semua IOC dari log ini." role="json_extractor"
 | table _time, gemini_analysis</pre>
-          </div>
+            </div>
+          </details>
 
-          <div style="padding:14px;border:1px solid #2a4a5a;border-radius:7px;background:#16212a;">
-            <h4 style="color:#ff9f43;margin:0 0 6px 0;">6. Deep Forensics (Override Model Pro)</h4>
-            <p style="color:#aaa;font-size:0.85em;margin:0 0 8px 0;">Gunakan model paling canggih untuk kasus kompleks.</p>
-            <pre style="background:#0d1b22;color:#7fffd4;padding:10px;border-radius:5px;font-size:0.82em;white-space:pre-wrap;">| makeresults
+          <details style="background:#0d1b22;border:1px solid #2a4a5a;border-radius:6px;cursor:pointer;">
+            <summary style="padding:14px;font-weight:bold;color:#ff9f43;font-size:1.1em;outline:none;">6. Deep Forensics (Override Model Pro)</summary>
+            <div style="padding:0 14px 14px 14px;">
+              <p style="color:#aaa;font-size:0.9em;margin:0 0 8px 0;">Gunakan model paling canggih untuk kasus kompleks.</p>
+              <pre style="background:#000;color:#0f0;padding:12px;border-radius:5px;font-size:0.85em;white-space:pre-wrap;border-left:3px solid #ff9f43;">| makeresults
 | eval _raw="[payload berbahaya Anda di sini]"
 | geminianalyze prompt="Lakukan bedah forensik menyeluruh pada payload ini." role="malware_analyst" model="gemini-3.1-pro"</pre>
-          </div>
+            </div>
+          </details>
 
         </div>
       </html>
