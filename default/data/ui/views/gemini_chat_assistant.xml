@@ -1,159 +1,144 @@
-<dashboard version="2" theme="dark">
-    <label>💬 Gemini Studio Chat</label>
-    <description>Berkonsultasi dengan AI SOC Assistant dalam balutan Dashboard Studio yang interaktif dan elegan.</description>
-    <definition><![CDATA[
-{
-  "visualizations": {
-    "viz_chat_output": {
-      "type": "splunk.table",
-      "dataSources": {
-        "primary": "ds_chat"
-      },
-      "options": {
-        "columnFormat": {
-          "gemini_analysis": {
-            "width": 900
+<dashboard version="1.1" theme="dark" script="setup_page.js">
+  <label>💬 Gemini SOC Chat Assistant</label>
+  <description>Asisten interaktif untuk bedah log dan payload keamanan. Paste log, pilih persona AI, dan dapatkan analisa murni seketika.</description>
+  
+  <row>
+    <panel>
+      <html>
+        <style>
+          .chat-wrapper { font-family: 'Inter', 'Segoe UI', sans-serif; max-width: 100%; color: #e2e8f0; }
+          .chat-header { 
+            background: linear-gradient(135deg, #0f172a, #1e293b, #334155); 
+            padding: 24px 30px; 
+            border-radius: 12px; 
+            margin-bottom: 24px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); 
+            border: 1px solid #334155;
           }
-        }
-      }
-    },
-    "viz_bg_main": {
-      "type": "splunk.rectangle",
-      "options": {
-        "fillColor": "#0F2027",
-        "strokeColor": "#00B4D8",
-        "strokeWidth": 2
-      }
-    },
-    "viz_header_text": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "## 🤖 Gemini SOC Chat Assistant (Studio Edition)\n\nPaste log mentah, pilih persona, dan ajukan instruksi analitik mendalam secara seketika. AI akan merespons langsung dalam tabel di bawah dengan rekomendasi teknis dan pemetaan **MITRE ATT&CK**.",
-        "backgroundColor": "transparent"
-      }
-    },
-    "viz_pills": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "<span style=\"background:rgba(255,255,255,0.12); color:#b0d4e8; padding:4px 12px; border-radius:20px; font-size:12px; margin-right:8px;\">✅ Anti-Echo V2.1</span> <span style=\"background:rgba(255,255,255,0.12); color:#b0d4e8; padding:4px 12px; border-radius:20px; font-size:12px; margin-right:8px;\">✅ 5 Persona AI</span> <span style=\"background:rgba(255,255,255,0.12); color:#b0d4e8; padding:4px 12px; border-radius:20px; font-size:12px;\">✅ Dashboard Studio Layout</span>",
-        "backgroundColor": "transparent"
-      }
-    }
-  },
-  "dataSources": {
-    "ds_chat": {
-      "type": "ds.search",
-      "options": {
-        "query": "| makeresults | eval _raw=$raw_data|s$ | geminianalyze prompt=$prompt|s$ role=$role|s$ model=$model|s$ | table gemini_analysis",
-        "queryParameters": {
-          "earliest": "-1m",
-          "latest": "now"
-        }
-      }
-    }
-  },
-  "inputs": {
-    "input_model": {
-      "type": "input.dropdown",
-      "options": {
-        "items": [
-          {"label": "Gemma 4 31B IT", "value": "gemma-4-31b-it"},
-          {"label": "Gemini 3.1 Pro", "value": "gemini-3.1-pro"},
-          {"label": "Gemini 3 Flash", "value": "gemini-3-flash"}
-        ],
-        "defaultValue": "gemma-4-31b-it",
-        "token": "model"
-      },
-      "title": "🧠 Model AI"
-    },
-    "input_role": {
-      "type": "input.dropdown",
-      "options": {
-        "items": [
-          {"label": "SOC Analyst", "value": "soc_clean_report"},
-          {"label": "Threat Hunter", "value": "threat_hunter"},
-          {"label": "Malware Analyst", "value": "malware_analyst"},
-          {"label": "Executive", "value": "executive_report"},
-          {"label": "JSON Extractor", "value": "json_extractor"}
-        ],
-        "defaultValue": "soc_clean_report",
-        "token": "role"
-      },
-      "title": "🎭 Persona AI"
-    },
-    "input_raw": {
-      "type": "input.text",
-      "options": {
-        "defaultValue": "EventID=4625 User=Administrator",
-        "token": "raw_data"
-      },
-      "title": "📋 Data Mentah / Log (Paste di sini)"
-    },
-    "input_prompt": {
-      "type": "input.text",
-      "options": {
-        "defaultValue": "Tolong analisa log ini dan temukan potensial brute force.",
-        "token": "prompt"
-      },
-      "title": "💬 Pertanyaan / Instruksi Analisis (Lalu tekan Enter)"
-    }
-  },
-  "layout": {
-    "type": "absolute",
-    "options": {
-      "display": "auto",
-      "backgroundColor": "#070E14"
-    },
-    "structure": [
-      {
-        "item": "viz_bg_main",
-        "type": "block",
-        "position": {"x": 20, "y": 20, "w": 1160, "h": 150}
-      },
-      {
-        "item": "viz_header_text",
-        "type": "block",
-        "position": {"x": 40, "y": 40, "w": 1120, "h": 80}
-      },
-      {
-        "item": "viz_pills",
-        "type": "block",
-        "position": {"x": 40, "y": 120, "w": 1120, "h": 40}
-      },
-      {
-        "item": "input_model",
-        "type": "input",
-        "position": {"x": 20, "y": 190, "w": 280, "h": 60}
-      },
-      {
-        "item": "input_role",
-        "type": "input",
-        "position": {"x": 320, "y": 190, "w": 280, "h": 60}
-      },
-      {
-        "item": "input_raw",
-        "type": "input",
-        "position": {"x": 20, "y": 270, "w": 1160, "h": 60}
-      },
-      {
-        "item": "input_prompt",
-        "type": "input",
-        "position": {"x": 20, "y": 350, "w": 1160, "h": 60}
-      },
-      {
-        "item": "viz_chat_output",
-        "type": "block",
-        "position": {"x": 20, "y": 430, "w": 1160, "h": 500}
-      }
-    ]
-  }
-}
-    ]]></definition>
-    <meta type="hiddenElements"><![CDATA[
-{
-    "hideEdit": false,
-    "hideOpenInSearch": false,
-    "hideExport": false
-}
-    ]]></meta>
+          .chat-header h2 { color: #fff; margin: 0 0 8px 0; font-size: 1.6em; font-weight: 600; display:flex; align-items:center; gap:10px; }
+          .chat-header p { color: #94a3b8; margin: 0; font-size: 0.95em; line-height: 1.5; }
+          .badge-container { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+          .badge { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 500; }
+          
+          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+          .form-group { display: flex; flex-direction: column; gap: 8px; }
+          .form-label { color: #cbd5e1; font-size: 0.85em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+          
+          select.custom-select, textarea.custom-textarea {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            color: #f8fafc; padding: 12px 16px; font-size: 0.95em; transition: all 0.2s ease;
+            width: 100%; box-sizing: border-box; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+          }
+          select.custom-select:focus, textarea.custom-textarea:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); outline: none; }
+          textarea.custom-textarea { resize: vertical; min-height: 100px; font-family: 'JetBrains Mono', monospace; line-height: 1.5; }
+          textarea#chat-prompt { min-height: 70px; font-family: 'Inter', 'Segoe UI', sans-serif; }
+          
+          .quick-prompts-container { background: #1e293b; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #334155; }
+          .quick-prompts-label { color: #94a3b8; font-size: 0.8em; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; gap:6px; }
+          .quick-prompts { display: flex; gap: 10px; flex-wrap: wrap; }
+          .btn-quick { 
+            background: #0f172a; color: #cbd5e1; border: 1px solid #334155; border-radius: 6px; 
+            padding: 8px 16px; font-size: 0.85em; cursor: pointer; transition: all 0.2s ease; font-weight: 500;
+          }
+          .btn-quick:hover { background: #38bdf8; color: #fff; border-color: #38bdf8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3); }
+          
+          .action-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; background: #0f172a; padding: 16px 20px; border-radius: 8px; border: 1px solid #334155;}
+          .action-buttons { display: flex; gap: 12px; align-items: center; }
+          .btn-primary { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; border: none; border-radius: 6px; padding: 12px 32px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); }
+          .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4); }
+          .btn-secondary { background: transparent; color: #f43f5e; border: 1px solid #f43f5e; border-radius: 6px; padding: 11px 24px; font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+          .btn-secondary:hover { background: #f43f5e; color: #fff; }
+          .char-count { color: #64748b; font-size: 0.85em; font-family: monospace; }
+        </style>
+
+        <div class="chat-wrapper">
+          <div class="chat-header">
+            <h2>💬 Gemini SOC Chat Assistant</h2>
+            <p>Konsultasikan temuan keamanan secara interaktif. Tidak perlu menyusun SPL yang panjang, cukup tempel data dan tanyakan kepada AI persona pilihan Anda.</p>
+            <div class="badge-container">
+              <span class="badge">🔥 V2.1 Engine</span>
+              <span class="badge">🛡️ 5 Persona Analis Khusus</span>
+              <span class="badge">🎯 MITRE ATT&amp;CK Mapping</span>
+              <span class="badge">✨ Bebas Basa-basi</span>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">🧠 Model AI</label>
+              <select id="chat-model" class="custom-select">
+                <option value="gemma-4-31b-it">Gemma 4 31B IT — Super Cepat &amp; Akurat</option>
+                <option value="gemini-3.1-pro">Gemini 3.1 Pro — Investigasi Kompleks &amp; Mendalam</option>
+                <option value="gemini-3-flash">Gemini 3 Flash — Responsif &amp; Ringan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">🎭 Persona AI</label>
+              <select id="chat-role" class="custom-select">
+                <option value="soc_clean_report">SOC Analyst — Laporan Insiden Standar</option>
+                <option value="threat_hunter">Threat Hunter — Temuan IOC &amp; Taktik MITRE</option>
+                <option value="malware_analyst">Malware Analyst — Bedah Payload Berbahaya</option>
+                <option value="executive_report">Executive — Laporan Bisnis untuk CISO/Direksi</option>
+                <option value="json_extractor">JSON Extractor — Output Mesin (SOAR Ready)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="quick-prompts-container">
+            <div class="quick-prompts-label">⚡ Ide Pertanyaan Instan (Klik untuk memakai)</div>
+            <div class="quick-prompts">
+              <button class="btn-quick" onclick="setPrompt('Identifikasi potensi serangan brute force atau password spray pada log ini. Sertakan teknik MITRE ATT&amp;CK.')">🔐 Analisis Brute Force</button>
+              <button class="btn-quick" onclick="setPrompt('Lakukan bedah payload: cari indikasi eksekusi perintah tersembunyi, C2 communication, atau teknik evasion.')">🦠 Analisis Malware</button>
+              <button class="btn-quick" onclick="setPrompt('Ekstrak seluruh IOC (IP, domain, hash) dari data ini dan berikan ringkasan ancamannya.')">🎯 Ekstraksi IOC</button>
+              <button class="btn-quick" onclick="setPrompt('Buatkan ringkasan insiden keamanan ini untuk dewan direksi, fokus pada dampak bisnis dan tanpa jargon teknis.')">📊 Laporan Eksekutif</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label class="form-label">📋 Data Mentah (Paste Log / Payload / Text di sini)</label>
+            <textarea id="chat-data" class="custom-textarea" placeholder="Contoh:&#10;EventID=4625 User=administrator Source_IP=192.168.1.10 LogonType=3&#10;Atau paste payload obfuscated PowerShell di sini..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">💬 Instruksi / Pertanyaan</label>
+            <textarea id="chat-prompt" class="custom-textarea" placeholder="Ketik pertanyaan atau instruksi analisa spesifik Anda untuk AI..."></textarea>
+          </div>
+
+          <div class="action-bar">
+            <div class="action-buttons">
+              <button class="btn-primary" onclick="runChat()">🚀 Mulai Analisis</button>
+              <button class="btn-secondary" onclick="clearAll()">🗑️ Bersihkan Form</button>
+            </div>
+            <span class="char-count" id="char-counter">0 Bytes Data</span>
+          </div>
+        </div>
+
+        <script>
+          function setPrompt(text) {
+            document.getElementById('chat-prompt').value = text;
+            document.getElementById('chat-prompt').focus();
+          }
+          function clearAll() {
+            document.getElementById('chat-data').value = '';
+            document.getElementById('chat-prompt').value = '';
+            document.getElementById('char-counter').textContent = '0 Bytes Data';
+          }
+          document.getElementById('chat-data').addEventListener('input', function() {
+            document.getElementById('char-counter').textContent = this.value.length.toLocaleString() + ' Bytes Data';
+          });
+          function runChat() {
+            var d = document.getElementById('chat-data').value || 'No data provided';
+            var p = document.getElementById('chat-prompt').value;
+            var m = document.getElementById('chat-model').value;
+            var r = document.getElementById('chat-role').value;
+            if (!p.trim()) { alert('Harap masukkan instruksi atau pertanyaan untuk AI.'); return; }
+            
+            // Format pencarian agar hasil tampil bagus di Splunk Classic Table
+            var q = '| makeresults \n| eval _raw=' + JSON.stringify(d) + '\n| geminianalyze prompt=' + JSON.stringify(p) + ' role=' + JSON.stringify(r) + ' model=' + JSON.stringify(m) + '\n| table gemini_analysis';
+            window.location.href = window.location.origin + '/en-US/app/gemini_soc_assistant/search?q=' + encodeURIComponent(q) + '&earliest=-1m&latest=now';
+          }
+        </script>
+      </html>
+    </panel>
+  </row>
 </dashboard>

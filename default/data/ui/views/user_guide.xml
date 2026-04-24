@@ -1,151 +1,115 @@
-<dashboard version="2" theme="dark">
-    <label>📚 User Guide</label>
-    <description>Panduan lengkap fitur Gemini SOC Assistant V2.1</description>
-    <definition><![CDATA[
-{
-  "visualizations": {
-    "viz_bg_header": {
-      "type": "splunk.rectangle",
-      "options": {
-        "fillColor": "#0F2027",
-        "strokeColor": "#00B4D8",
-        "strokeWidth": 2
-      }
-    },
-    "viz_header": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "# 📚 Panduan Lengkap Gemini SOC Assistant V2.1 (Studio Edition)\n**Tingkatkan kapabilitas analis keamanan Anda dengan asisten AI yang terintegrasi secara *native* di dalam Splunk.**\n\nAplikasi ini dirancang untuk membaca log secara pintar, memetakan ancaman ke framework MITRE ATT&CK, dan kini sepenuhnya mengadopsi arsitektur **Splunk Dashboard Studio**.",
-        "backgroundColor": "transparent"
-      }
-    },
-    "viz_bg_chat": {
-      "type": "splunk.rectangle",
-      "options": {
-        "fillColor": "#1A2E3A",
-        "strokeColor": "transparent",
-        "strokeWidth": 0
-      }
-    },
-    "viz_chat": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "### 💬 1. Gemini Studio Chat Assistant\nBerhenti menulis query SPL (Search Processing Language) yang rumit hanya untuk menganalisis payload. Gunakan menu **Gemini Chat Assistant**.\n\n- **Paste Log Mentah:** Anda dapat mem-paste log Windows Event, akses web, atau JSON mentah.\n- **Pilih Persona:** Sesuaikan output AI dengan audiens Anda (contoh: *Threat Hunter* untuk teknis, *Executive* untuk manajerial).\n- **Klik Analisis:** AI akan memproses log Anda tanpa noise/basa-basi dan langsung menampilkan temuan kritis.",
-        "backgroundColor": "transparent"
-      }
-    },
-    "viz_bg_generator": {
-      "type": "splunk.rectangle",
-      "options": {
-        "fillColor": "#1A252F",
-        "strokeColor": "transparent",
-        "strokeWidth": 0
-      }
-    },
-    "viz_generator": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "### 💡 2. AI Dashboard Studio Generator\nKesulitan mendesain Dashboard Studio yang rumit? Biarkan AI yang bekerja untuk Anda.\n\n- Navigasi ke menu **Dashboard Generator**.\n- Jelaskan apa yang Anda inginkan (contoh: *\"Buatkan dashboard pemantauan firewall dengan layout absolute, warna gelap, 2 grafik pie, dan 1 timechart\"*).\n- AI akan menghasilkan **kode JSON murni** yang bisa Anda langsung *copy-paste* ke *Source Editor* di Splunk.",
-        "backgroundColor": "transparent"
-      }
-    },
-    "viz_bg_spl": {
-      "type": "splunk.rectangle",
-      "options": {
-        "fillColor": "#1E3745",
-        "strokeColor": "transparent",
-        "strokeWidth": 0
-      }
-    },
-    "viz_spl": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "### ⚡ 3. Penggunaan Langsung via SPL\nJika Anda sedang berada di mode Search, Anda tetap dapat memanggil command `| geminianalyze` di ujung query Anda.\n\n**Analisis Per Baris Log (Single Mode):**\n```spl\nindex=wineventlog EventCode=4625 \n| head 10 \n| geminianalyze prompt=\"Identifikasi pola brute force.\"\n```\n**Analisis Rangkuman (Batch Mode):**\n```spl\nindex=firewall action=blocked \n| head 100 \n| geminianalyze prompt=\"Buat ringkasan serangan.\" batch=true role=\"threat_hunter\"\n```",
-        "backgroundColor": "transparent"
-      }
-    },
-    "viz_bg_setup": {
-      "type": "splunk.rectangle",
-      "options": {
-        "fillColor": "#0D1B22",
-        "strokeColor": "#06D6A0",
-        "strokeWidth": 2
-      }
-    },
-    "viz_setup": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "### ⚙️ 4. Konfigurasi Role & API Key\nJangan lupa untuk menyetel API Key Anda di halaman **Setup Page**.\nAnda juga dapat mengelola dan membuat **Role Kustom** baru di sana. Misalnya, role khusus analisis forensik dengan bahasa yang disesuaikan untuk tim Anda. Sistem baru kami memastikan API Key Anda direplikasi dengan aman bahkan di dalam arsitektur **Search Head Cluster**.",
-        "backgroundColor": "transparent"
-      }
-    }
-  },
-  "layout": {
-    "type": "absolute",
-    "options": {
-      "display": "auto",
-      "backgroundColor": "#070E14"
-    },
-    "structure": [
-      {
-        "item": "viz_bg_header",
-        "type": "block",
-        "position": {"x": 20, "y": 20, "w": 1160, "h": 140}
-      },
-      {
-        "item": "viz_header",
-        "type": "block",
-        "position": {"x": 40, "y": 30, "w": 1120, "h": 120}
-      },
-      {
-        "item": "viz_bg_chat",
-        "type": "block",
-        "position": {"x": 20, "y": 180, "w": 570, "h": 220}
-      },
-      {
-        "item": "viz_chat",
-        "type": "block",
-        "position": {"x": 40, "y": 190, "w": 530, "h": 200}
-      },
-      {
-        "item": "viz_bg_generator",
-        "type": "block",
-        "position": {"x": 610, "y": 180, "w": 570, "h": 220}
-      },
-      {
-        "item": "viz_generator",
-        "type": "block",
-        "position": {"x": 630, "y": 190, "w": 530, "h": 200}
-      },
-      {
-        "item": "viz_bg_spl",
-        "type": "block",
-        "position": {"x": 20, "y": 420, "w": 1160, "h": 220}
-      },
-      {
-        "item": "viz_spl",
-        "type": "block",
-        "position": {"x": 40, "y": 430, "w": 1120, "h": 200}
-      },
-      {
-        "item": "viz_bg_setup",
-        "type": "block",
-        "position": {"x": 20, "y": 660, "w": 1160, "h": 140}
-      },
-      {
-        "item": "viz_setup",
-        "type": "block",
-        "position": {"x": 40, "y": 670, "w": 1120, "h": 120}
-      }
-    ]
-  }
-}
-    ]]></definition>
-    <meta type="hiddenElements"><![CDATA[
-{
-    "hideEdit": false,
-    "hideOpenInSearch": false,
-    "hideExport": false
-}
-    ]]></meta>
+<dashboard version="1.1" theme="dark">
+  <label>📚 User Guide</label>
+  <description>Buku Panduan dan Praktik Terbaik Gemini SOC Assistant V2.1</description>
+  
+  <row>
+    <panel>
+      <html>
+        <style>
+          .guide-container { font-family: 'Inter', 'Segoe UI', sans-serif; color: #cbd5e1; max-width: 1000px; margin: 0 auto; padding: 20px 0; }
+          .guide-header { text-align: center; margin-bottom: 40px; padding: 30px; background: #0f172a; border-radius: 12px; border: 1px solid #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+          .guide-header h1 { color: #f8fafc; font-size: 2.2em; margin: 0 0 10px 0; font-weight: 700; background: -webkit-linear-gradient(0deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+          .guide-header p { font-size: 1.1em; color: #94a3b8; margin: 0; }
+          
+          .guide-section { background: #1e293b; border-radius: 10px; margin-bottom: 30px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+          .section-header { padding: 20px 24px; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #334155; }
+          .section-icon { font-size: 1.8em; background: #38bdf8; color: #0f172a; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; }
+          .section-header h2 { margin: 0; color: #f8fafc; font-size: 1.4em; font-weight: 600; }
+          .section-content { padding: 24px; line-height: 1.6; }
+          
+          .highlight-box { background: rgba(56, 189, 248, 0.05); border-left: 4px solid #38bdf8; padding: 16px 20px; border-radius: 4px; margin-bottom: 20px; }
+          .highlight-box p { margin: 0; color: #bae6fd; }
+          
+          .feature-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+          .feature-card { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155; transition: transform 0.2s; }
+          .feature-card:hover { transform: translateY(-3px); border-color: #475569; }
+          .feature-card h3 { color: #f8fafc; margin: 0 0 10px 0; font-size: 1.1em; display:flex; align-items:center; gap:8px;}
+          .feature-card p { color: #94a3b8; margin: 0; font-size: 0.9em; }
+
+          .spl-example { margin-top: 15px; }
+          .spl-example h4 { color: #e2e8f0; margin: 0 0 8px 0; font-size: 1em; }
+          .code-block { background: #000; color: #a7f3d0; padding: 16px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; white-space: pre-wrap; overflow-x: auto; border: 1px solid #1e293b; }
+          
+          .pill-tag { display: inline-block; background: #312e81; color: #c7d2fe; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-bottom: 10px; font-weight: 500; }
+        </style>
+
+        <div class="guide-container">
+          
+          <div class="guide-header">
+            <h1>Gemini SOC Assistant V2.1</h1>
+            <p>Elevate Your Security Operations Center with Agentic AI Capabilities.</p>
+          </div>
+
+          <div class="guide-section">
+            <div class="section-header">
+              <div class="section-icon">💬</div>
+              <h2>UI Interaktif: Chat &amp; Generator</h2>
+            </div>
+            <div class="section-content">
+              <div class="highlight-box">
+                <p>Versi 2.1 membawa antarmuka Splunk Classic Dashboard yang elegan untuk mempermudah alur kerja Anda tanpa perlu menghapal command SPL.</p>
+              </div>
+              <div class="feature-list">
+                <div class="feature-card">
+                  <h3>🧠 Chat Assistant</h3>
+                  <p>Dashboard tempat Anda mem-paste log, payload, atau teks mentah. Dilengkapi dengan dropdown **Persona AI** (Threat Hunter, SOC Analyst, dsb.) untuk memastikan output analitik sesuai dengan target audiens, dan didukung deteksi **MITRE ATT&amp;CK** otomatis.</p>
+                </div>
+                <div class="feature-card">
+                  <h3>💡 Dashboard Generator</h3>
+                  <p>Butuh dashboard instan? Deskripsikan saja apa yang Anda mau (contoh: *Dashboard Firewall dengan pie chart*). AI akan men-generate kode **Simple XML** atau **Dashboard Studio (JSON)** secara utuh untuk Anda *copy-paste*.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-section">
+            <div class="section-header">
+              <div class="section-icon">⚡</div>
+              <h2>Penggunaan Custom Search Command (SPL)</h2>
+            </div>
+            <div class="section-content">
+              <p>Anda tetap dapat memanfaatkan fleksibilitas penuh di jendela pencarian (*Search*) dengan menggunakan *custom command* <code>| geminianalyze</code>.</p>
+              
+              <div class="spl-example">
+                <span class="pill-tag">Single Mode (Analisis Baris per Baris)</span>
+                <h4>Contoh: Analisis setiap proses pembuatan akun baru (Event 4720)</h4>
+                <div class="code-block">index=wineventlog EventCode=4720 
+| head 5 
+| geminianalyze prompt="Periksa apakah ada tanda-tanda privilege escalation atau backdoor pada pembuatan akun ini."</div>
+              </div>
+
+              <div class="spl-example" style="margin-top: 24px;">
+                <span class="pill-tag" style="background: #831843; color: #fbcfe8;">Batch Mode (Rangkuman Kolektif)</span>
+                <h4>Contoh: Merangkum pola anomali dari ratusan traffic firewall yang diblokir</h4>
+                <div class="code-block">index=firewall action=blocked 
+| head 200 
+| geminianalyze prompt="Buat ringkasan serangan. Identifikasi IP paling agresif dan taktik serangannya." batch=true role="threat_hunter" model="gemini-3.1-pro"</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-section">
+            <div class="section-header">
+              <div class="section-icon">⚙️</div>
+              <h2>Manajemen Sistem &amp; Keamanan Data</h2>
+            </div>
+            <div class="section-content">
+              <p>Aplikasi ini dibangun dengan *security architecture* yang solid untuk lingkungan perusahaan (Enterprise).</p>
+              <div class="feature-list">
+                <div class="feature-card">
+                  <h3>🔐 SHC Safe API Keys</h3>
+                  <p>API Key Anda disimpan menggunakan Splunk Credential Store <code>storage/passwords</code>. Pada V2.1, proses ini dikelola di *backend* menggunakan *REST endpoint custom* sehingga 100% aman dan akan ter-replikasi di **Search Head Cluster** tanpa error.</p>
+                </div>
+                <div class="feature-card">
+                  <h3>🎭 Role Customization</h3>
+                  <p>Kunjungi menu **Setup Page**. Anda tidak hanya mengatur Model AI, tetapi dapat **mengedit, menambah, atau menghapus Role Kustom** untuk menyesuaikan format laporan dengan *SOP* tim internal perusahaan Anda.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </html>
+    </panel>
+  </row>
 </dashboard>

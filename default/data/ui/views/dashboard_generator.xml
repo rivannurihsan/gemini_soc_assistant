@@ -1,133 +1,115 @@
-<dashboard version="2" theme="dark">
-    <label>💡 AI Dashboard Studio Generator</label>
-    <description>Beritahu AI apa yang ingin Anda bangun, dan AI akan merancang layout, visualisasi, dan query dalam format JSON Dashboard Studio secara utuh.</description>
-    <definition><![CDATA[
-{
-  "visualizations": {
-    "viz_table_output": {
-      "type": "splunk.table",
-      "dataSources": {
-        "primary": "ds_ai_generator"
-      },
-      "options": {
-        "columnFormat": {
-          "gemini_analysis": {
-            "width": 1000
+<dashboard version="1.1" theme="dark">
+  <label>💡 AI Dashboard Generator</label>
+  <description>Generate kode Dashboard Splunk secara instan menggunakan AI.</description>
+  
+  <row>
+    <panel>
+      <html>
+        <style>
+          .gen-wrapper { font-family: 'Inter', 'Segoe UI', sans-serif; max-width: 100%; color: #e2e8f0; }
+          .gen-header { 
+            background: linear-gradient(135deg, #1e1b4b, #312e81, #4338ca); 
+            padding: 24px 30px; 
+            border-radius: 12px; 
+            margin-bottom: 24px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); 
+            border: 1px solid #3730a3;
           }
-        }
-      }
-    },
-    "viz_header_bg": {
-      "type": "splunk.rectangle",
-      "options": {
-        "fillColor": "#1A252F",
-        "strokeColor": "#3498DB",
-        "strokeWidth": 3
-      }
-    },
-    "viz_header_text": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "# 💡 Splunk Dashboard Studio Generator (AI-Powered)\n**Transformasikan ide Anda menjadi Dashboard Studio yang modern dan interaktif secara instan.**\n\n1. Ketik kebutuhan SOC/Keamanan Anda di bawah ini.\n2. Tekan Enter.\n3. Copy kode JSON yang dihasilkan AI pada tabel di bawah, lalu paste di menu *Source* saat Anda membuat Dashboard Studio baru di Splunk.",
-        "backgroundColor": "transparent"
-      }
-    },
-    "viz_tips": {
-      "type": "splunk.markdown",
-      "options": {
-        "markdown": "**Tips Prompt:** *\"Buatkan saya Executive Dashboard untuk Ransomware dengan tema dark. Gunakan 3 single value di atas, 1 chart distribusi di tengah, dan layout absolute yang elegan.\"*",
-        "backgroundColor": "transparent"
-      }
-    }
-  },
-  "dataSources": {
-    "ds_ai_generator": {
-      "type": "ds.search",
-      "options": {
-        "query": "| makeresults | eval _raw=\"\" | geminianalyze prompt=$prompt|s$ role=\"splunk_dashboard_studio_dev\" | table gemini_analysis",
-        "queryParameters": {
-          "earliest": "-1m",
-          "latest": "now"
-        }
-      }
-    }
-  },
-  "inputs": {
-    "input_prompt": {
-      "type": "input.text",
-      "options": {
-        "defaultValue": "Rancang dashboard SOC Executive Summary dengan layout absolute. Tambahkan 2 grafik pie untuk top IP dan top Malware, serta 1 tabel anomali.",
-        "token": "prompt"
-      },
-      "title": "📝 Deskripsikan Detail Dashboard Anda (Lalu tekan Enter)"
-    }
-  },
-  "layout": {
-    "type": "absolute",
-    "options": {
-      "display": "auto",
-      "backgroundColor": "#0B161E"
-    },
-    "structure": [
-      {
-        "item": "viz_header_bg",
-        "type": "block",
-        "position": {
-          "x": 20,
-          "y": 20,
-          "w": 1160,
-          "h": 140
-        }
-      },
-      {
-        "item": "viz_header_text",
-        "type": "block",
-        "position": {
-          "x": 40,
-          "y": 30,
-          "w": 1120,
-          "h": 120
-        }
-      },
-      {
-        "item": "viz_tips",
-        "type": "block",
-        "position": {
-          "x": 20,
-          "y": 170,
-          "w": 1160,
-          "h": 40
-        }
-      },
-      {
-        "item": "input_prompt",
-        "type": "input",
-        "position": {
-          "x": 20,
-          "y": 220,
-          "w": 1160,
-          "h": 60
-        }
-      },
-      {
-        "item": "viz_table_output",
-        "type": "block",
-        "position": {
-          "x": 20,
-          "y": 300,
-          "w": 1160,
-          "h": 600
-        }
-      }
-    ]
-  }
-}
-    ]]></definition>
-    <meta type="hiddenElements"><![CDATA[
-{
-    "hideEdit": false,
-    "hideOpenInSearch": false,
-    "hideExport": false
-}
-    ]]></meta>
+          .gen-header h2 { color: #fff; margin: 0 0 8px 0; font-size: 1.6em; font-weight: 600; }
+          .gen-header p { color: #a5b4fc; margin: 0; font-size: 0.95em; line-height: 1.5; }
+          
+          .config-panel { background: #0f172a; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+          .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+          .form-label { color: #cbd5e1; font-size: 0.85em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+          
+          select.custom-select, textarea.custom-textarea {
+            background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+            color: #f8fafc; padding: 12px 16px; font-size: 0.95em; transition: all 0.2s ease;
+            width: 100%; box-sizing: border-box;
+          }
+          select.custom-select:focus, textarea.custom-textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); outline: none; }
+          textarea.custom-textarea { resize: vertical; min-height: 120px; font-family: 'Inter', sans-serif; line-height: 1.5; }
+          
+          .quick-ideas { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+          .btn-idea { 
+            background: rgba(99, 102, 241, 0.1); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 20px; 
+            padding: 6px 14px; font-size: 0.85em; cursor: pointer; transition: all 0.2s ease; font-weight: 500;
+          }
+          .btn-idea:hover { background: #6366f1; color: #fff; transform: scale(1.02); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
+          
+          .action-bar { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-top: 10px; }
+          .btn-generate { background: linear-gradient(135deg, #4f46e5, #4338ca); color: #fff; border: none; border-radius: 6px; padding: 12px 32px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+          .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4); }
+          .btn-clear { background: transparent; color: #cbd5e1; border: 1px solid #475569; border-radius: 6px; padding: 11px 24px; font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+          .btn-clear:hover { background: #475569; color: #fff; }
+          
+          .info-box { background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 16px; margin-top: 24px; border-radius: 4px; display: flex; gap: 12px; align-items: flex-start; }
+          .info-icon { font-size: 1.5em; }
+          .info-text p { margin: 0 0 4px 0; color: #d1fae5; font-size: 0.9em; }
+          .info-text p strong { color: #34d399; }
+        </style>
+
+        <div class="gen-wrapper">
+          <div class="gen-header">
+            <h2>💡 AI Dashboard Generator</h2>
+            <p>Ubah ide Anda menjadi *source code* Splunk Dashboard yang elegan hanya dengan satu klik. AI akan menyusun query SPL, layout panel, dan konfigurasi input secara cerdas.</p>
+          </div>
+
+          <div class="config-panel">
+            <div class="form-group">
+              <label class="form-label">🏗️ Target Arsitektur Dashboard</label>
+              <select id="gen-format" class="custom-select">
+                <option value="splunk_dashboard_dev">Classic Dashboard (Simple XML) — Sangat mendukung kustomisasi JS/CSS/HTML</option>
+                <option value="splunk_dashboard_studio_dev">Dashboard Studio (JSON Definition) — Cocok untuk infografis dan grid kompleks</option>
+              </select>
+            </div>
+
+            <label class="form-label">✨ Inspirasi Desain (Klik untuk menerapkan)</label>
+            <div class="quick-ideas">
+              <button class="btn-idea" onclick="sp('Buatkan form dashboard pemantauan Gagal Login Windows (Event 4625). Beri input time range, dropdown filter User, text filter IP. Tambahkan Single Value untuk total kejadian, bar chart persebaran IP, dan tabel log.')">📊 Windows Login Monitor</button>
+              <button class="btn-idea" onclick="sp('Rancang dashboard eksekutif keamanan jaringan (Firewall). Tampilkan top 10 IP intrusi, tren serangan harian dengan area chart, dan sebaran geografis serangan di peta.')">🌐 Firewall Executive</button>
+              <button class="btn-idea" onclick="sp('Buatkan dashboard CISO untuk rangkuman ancaman mingguan. Sediakan 4 single values utama di paling atas, diikuti 2 pie chart perbandingan, dan satu tabel anomali dengan warna severity.')">🛡️ CISO Overview</button>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">📝 Jelaskan Detail Dashboard Impian Anda</label>
+              <textarea id="gen-prompt" class="custom-textarea" placeholder="Jelaskan layout, visualisasi (chart/tabel/single), interaksi input (dropdown/time), dan metrik data yang Anda perlukan di sini..."></textarea>
+            </div>
+
+            <div class="action-bar">
+              <button class="btn-generate" onclick="generateCode()">🪄 Generate Kode Dashboard</button>
+              <button class="btn-clear" onclick="clearInput()">🗑️ Kosongkan Form</button>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-icon">💡</div>
+            <div class="info-text">
+              <p><strong>Cara Menerapkan Hasil:</strong></p>
+              <p>1. Tekan tombol Generate, Anda akan diarahkan ke layar pencarian.</p>
+              <p>2. Salin kode (XML atau JSON) yang berada di dalam tabel kolom `gemini_analysis`.</p>
+              <p>3. Di menu *Dashboards* Splunk, buat Dashboard baru, pilih *Source* (untuk Classic) atau tab *Source Editor* (untuk Studio), lalu *paste* kode tersebut.</p>
+            </div>
+          </div>
+        </div>
+
+        <script>
+          function sp(t) {
+            document.getElementById('gen-prompt').value = t;
+            document.getElementById('gen-prompt').focus();
+          }
+          function clearInput() { document.getElementById('gen-prompt').value = ''; }
+          function generateCode() {
+            var prompt = document.getElementById('gen-prompt').value;
+            var formatRole = document.getElementById('gen-format').value;
+            if (!prompt.trim()) { alert('Harap deskripsikan desain dashboard Anda.'); return; }
+            
+            var q = '| makeresults \n| eval _raw="" \n| geminianalyze prompt=' + JSON.stringify(prompt) + ' role=' + JSON.stringify(formatRole) + ' model="gemini-3.1-pro" \n| table gemini_analysis';
+            
+            window.location.href = window.location.origin + '/en-US/app/gemini_soc_assistant/search?q=' + encodeURIComponent(q) + '&earliest=-1m&latest=now';
+          }
+        </script>
+      </html>
+    </panel>
+  </row>
 </dashboard>
